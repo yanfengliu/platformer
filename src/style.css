@@ -1,0 +1,104 @@
+:root { color-scheme: dark; --ink: #101b1d; --surface: #142124; --line: #364442; --amber: #edc586; --pale: #efe9d8; --muted: #98aaa6; --red: #b85750; font-family: "Trebuchet MS", "Segoe UI", sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--pale); background: radial-gradient(ellipse at 50% 12%, #203032 0%, #121d20 48%, #0a1317 100%); }
+body::before { position: fixed; inset: 0; pointer-events: none; content: ""; opacity: .2; background-image: repeating-linear-gradient(0deg, transparent 0 3px, #0001 3px 4px); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; }
+button:disabled { opacity: .34; cursor: default; }
+button:focus-visible, a:focus-visible, canvas:focus-visible { outline: 2px solid #ffdfa5; outline-offset: 4px; }
+.game-shell { width: min(1200px, calc(100% - 80px)); margin: 0 auto; padding-top: 22px; }
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 20px; height: 64px; margin-bottom: 18px; }
+.brand { display: inline-flex; align-items: center; gap: 13px; color: #e9d9b7; text-decoration: none; font: 17px Georgia, "Times New Roman", serif; letter-spacing: 3.5px; }
+.brand-mark { display: grid; place-items: center; border: 1px solid #826849; color: var(--amber); width: 38px; height: 38px; font-size: 27px; transform: rotate(-4deg); box-shadow: inset 0 0 14px #cb9e2b0d; }
+.brand small { display: block; font: 8px "Trebuchet MS", sans-serif; letter-spacing: 3.05px; color: #93a6a1; margin-top: 6px; }
+.toolbar { display: flex; align-items: center; gap: 7px; }
+.live-tag { display: flex; align-items: center; gap: 7px; margin-right: 12px; color: #859a94; font-size: 8px; letter-spacing: 1.7px; }
+.live-tag span { width: 4px; height: 4px; background: #91a583; box-shadow: 0 0 6px #90ad70a0; }
+.tool-button { border: 1px solid #384945; border-radius: 2px; background: #17242670; color: #b2bfb5; padding: 9px 12px; font-size: 11px; }
+.tool-button:hover:not(:disabled) { color: var(--amber); border-color: #8c7555; background: #27332e; }
+.game-frame { position: relative; isolation: isolate; width: 100%; aspect-ratio: 16 / 9; border: 1px solid #5c6557; box-shadow: 0 0 0 5px #162125, 0 0 0 6px #303e3d, 0 25px 65px #0008; background: #111f23; overflow: hidden; }
+.game-frame::after { content: ""; position: absolute; inset: 7px; z-index: 6; border: 1px solid #b4ad8714; pointer-events: none; }
+canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; outline: none; }
+.stage-vignette { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 95px 12px #06111450; z-index: 1; }
+.hud { position: absolute; inset: 26px 28px auto; display: flex; justify-content: space-between; gap: 24px; pointer-events: none; z-index: 2; text-shadow: 1px 2px #081014; }
+.vitals { width: clamp(150px, 23%, 242px); }
+.hud-label { display: flex; justify-content: space-between; align-items: center; gap: 9px; color: #e5dccc; font-size: 9px; letter-spacing: 1.6px; }
+.hud-label span:last-child { color: #c1cfc1; letter-spacing: 0; font-size: 10px; }
+.health-track { height: 8px; margin-top: 9px; padding: 2px; border: 1px solid #b68060; box-shadow: 0 2px 0 #081a1e; background: #2d272c; }
+#health-fill { height: 2px; background: linear-gradient(90deg, #ae5246, #e9a46e); box-shadow: 0 0 5px #e7784140; transition: width 100ms linear; }
+.supplies { display: flex; align-items: center; gap: 6px; margin-top: 9px; color: #b9c6ba; font-size: 10px; }
+.flask { color: #a8c790; font-size: 13px; }
+.gold-icon { color: var(--amber); font-size: 17px; }
+.divider { padding: 0 5px; color: #6d847f; }
+.supplies kbd { font-size: 8px; margin-left: 3px; }
+.floor-status { width: 225px; text-align: right; }
+.floor-topline { display: flex; justify-content: flex-end; gap: 16px; font-size: 9px; letter-spacing: 1.2px; color: #ded4bb; }
+.floor-topline span:last-child { color: #9bad9d; letter-spacing: 0; font-size: 10px; }
+.floor-progress { display: flex; justify-content: flex-end; align-items: center; height: 25px; margin: 2px 1px; }
+.floor-progress span { width: 7px; height: 7px; border: 1px solid #9ca68c; background: #233c3b; transform: rotate(45deg); }
+.floor-progress span.current { background: var(--amber); border-color: #ffe0ab; box-shadow: 0 0 8px #e7b04d88; }
+.floor-progress span.complete { background: #9eae83; border-color: #c0caa4; }
+.floor-progress i { display: block; width: 45px; height: 1px; margin: 0 6px; background: #81918470; }
+.hud-subline { color: #9cad9c; font-size: 9px; letter-spacing: .35px; }
+.hud-subline.gate-open { color: #eed391; }
+.run-note { position: absolute; left: 28px; right: 28px; bottom: 22px; display: flex; justify-content: space-between; color: #a1b3a3; font-size: 9px; letter-spacing: 1.25px; z-index: 2; pointer-events: none; text-shadow: 1px 1px #041317; }
+.run-note span:last-child { opacity: .65; font-size: 8px; }
+.combo-badge { position: absolute; right: 31px; top: 128px; display: flex; flex-direction: column; align-items: center; color: var(--amber); z-index: 2; text-shadow: 1px 2px #102528; }
+.combo-badge strong { font: 32px Georgia, serif; }
+.combo-badge span { font-size: 7px; letter-spacing: 2px; }
+.overlay { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; padding: 18px; background: #061416bf; backdrop-filter: blur(1px); }
+.overlay-title { background: linear-gradient(90deg, #081517b8, #08151873 50%, #081517b8); backdrop-filter: none; }
+.menu-panel { text-align: center; padding: 30px 36px; width: min(530px, 100%); max-height: 100%; overflow-y: auto; border: 1px solid #8e7d5460; background: linear-gradient(150deg, #1a2a28f5, #142021f5); box-shadow: inset 0 0 0 5px #ffffff02, 0 14px 36px #0005; }
+.eyebrow { margin: 0 0 17px; font-size: 9px; letter-spacing: 3.4px; color: #d7b77e; }
+.menu-heading { margin: 0; font: 43px/1.05 Georgia, "Times New Roman", serif; color: #f4e9d0; font-weight: normal; letter-spacing: -1.8px; }
+.menu-copy { font-size: 12px; line-height: 1.7; margin: 18px auto 22px; color: #b2c0b2; max-width: 360px; }
+.primary-button { display: block; width: min(270px, 100%); margin: 0 auto; padding: 14px 20px; border: 1px solid #e9c488; border-radius: 1px; background: linear-gradient(120deg, #dcb87e, #f0cc91); color: #23302b; box-shadow: inset 0 0 0 3px #a9844040, 0 4px 15px #0002; font: bold 11px "Trebuchet MS", sans-serif; letter-spacing: 1.55px; text-transform: uppercase; }
+.primary-button:hover { background: #f9dda7; box-shadow: 0 0 18px #efc27927; }
+.secondary-button { display: block; margin: 12px auto 0; border: 0; padding: 8px 20px; background: none; color: #b7c5b6; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
+.secondary-button:hover { color: var(--amber); }
+.menu-hint { font-size: 8px; letter-spacing: 1.7px; color: #7d958b; margin: 14px 0 0; }
+.title-panel { border: 0; padding: 12px 0; width: min(600px, 100%); background: none; box-shadow: none; overflow: visible; }
+.title-sigil { display: block; color: #e9c17b; font-size: 38px; margin-bottom: 14px; text-shadow: 0 0 25px #fbbd5145; }
+.title-panel .eyebrow { font-size: 8px; letter-spacing: 4px; color: #b2b396; margin-bottom: 22px; }
+.title-panel .menu-heading { font-size: clamp(36px, 6.5vw, 82px); letter-spacing: 6px; padding-left: 6px; text-shadow: 0 2px 0 #827250, 0 10px 24px #0004; }
+.title-panel .menu-copy { font: italic 15px/1.6 Georgia, serif; color: #d0c9b2; margin-top: 15px; margin-bottom: 17px; max-width: 450px; }
+.title-description { margin: 0 auto 31px; max-width: 295px; font-size: 11px; line-height: 1.8; color: #99aea2; }
+.title-tags { display: flex; justify-content: center; gap: 21px; margin-top: 35px; font-size: 7px; letter-spacing: 1.6px; color: #a8b49e; }
+.title-tags span + span::before { content: "·"; margin-right: 20px; color: #d1b97d; }
+.run-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 22px 0 27px; padding: 17px 0; border-top: 1px solid #66725555; border-bottom: 1px solid #66725555; }
+.run-stats strong { display: block; color: #e7c687; font: 23px Georgia, serif; }
+.run-stats span { display: block; color: #8da595; font-size: 7px; letter-spacing: 2px; margin-top: 7px; }
+.help-panel { width: min(620px, 100%); padding: 22px 34px; }
+.help-panel .menu-heading { font-size: 34px; }
+.help-panel .menu-copy { margin: 12px auto 14px; font-size: 11px; max-width: 450px; }
+.help-controls { display: grid; grid-template-columns: 170px 1fr; gap: 8px 18px; margin: 17px auto; text-align: left; font-size: 11px; }
+.help-controls dt { color: #e6ca97; }
+.help-controls dd { margin: 0; color: #a6b7a8; }
+.help-tip { border-top: 1px solid #66725555; padding-top: 13px; color: #8ea99b; font-size: 10px; line-height: 1.6; }
+.relic-panel { width: min(880px, 100%); padding: 25px 27px; }
+.relic-panel .menu-heading { font-size: 38px; }
+.relic-panel .menu-copy { margin: 10px auto 22px; }
+.relic-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.relic-card { position: relative; padding: 23px 17px 17px; border: 1px solid #6f7959; background: linear-gradient(130deg, #2e3e32, #1c2b29); color: var(--pale); text-align: left; min-height: 193px; }
+.relic-card:hover { border-color: #edc586; background: linear-gradient(130deg, #3b4937, #273a2e); transform: translateY(-2px); }
+.relic-number { position: absolute; top: 11px; right: 12px; color: #8c9e80; font-size: 9px; }
+.relic-symbol { display: block; font-size: 29px; color: #e7c486; margin-bottom: 15px; }
+.relic-card strong { display: block; font: 19px Georgia, serif; color: #eee0bc; margin-bottom: 11px; }
+.relic-description { display: block; color: #a4b8a0; font-size: 11px; line-height: 1.55; min-height: 37px; }
+.relic-select { display: block; margin-top: 20px; padding-top: 11px; border-top: 1px solid #717f5c55; color: #c9b77f; font-size: 8px; letter-spacing: 1.25px; }
+.victory-panel .menu-heading { color: #f4d69a; }
+.below-stage { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 0 17px; border-bottom: 1px solid #2a3a38; }
+.control-legend { display: flex; flex-wrap: wrap; gap: 16px; color: #90a398; font-size: 10px; }
+.control-legend > span { display: flex; align-items: center; gap: 5px; }
+kbd { display: inline-block; color: #bcc6b6; padding: 3px 5px; border: 1px solid #465550; border-bottom: 2px solid #465550; border-radius: 2px; font: 9px "Trebuchet MS", sans-serif; background: #182727; min-width: 18px; text-align: center; }
+.footnote { white-space: nowrap; color: #647d72; font-size: 8px; letter-spacing: 2px; }
+.page-caption { margin: 17px 0 24px; display: flex; justify-content: space-between; color: #768d80; font: italic 12px Georgia, serif; }
+.page-caption span { color: #637d72; font: 9px "Trebuchet MS", sans-serif; letter-spacing: .6px; }
+.screen-reader-only { position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.no-script { position: fixed; inset: auto 20px 20px; padding: 20px; background: #322a1e; border: 1px solid var(--amber); }
+@media (min-width: 1440px) { .game-shell { padding-top: 35px; } .masthead { margin-bottom: 23px; } }
+@media (max-width: 1000px) { .game-shell { width: calc(100% - 40px); padding-top: 15px; } .live-tag, .footnote { display: none; } .hud { inset: 17px 20px auto; } .title-sigil { font-size: 28px; margin-bottom: 9px; } .title-panel .eyebrow { margin-bottom: 14px; } .title-description { margin-bottom: 21px; } .title-tags { margin-top: 23px; } .control-legend { gap: 12px; } .help-controls { font-size: 10px; gap: 6px 12px; } .help-panel { padding: 18px 25px; } .help-panel .eyebrow { margin-bottom: 10px; } .help-panel .menu-copy { margin-bottom: 10px; } }
+@media (max-width: 700px) { .game-shell { width: calc(100% - 24px); padding-top: 6px; } .masthead { height: 58px; margin-bottom: 10px; gap: 8px; } .brand { font-size: 13px; letter-spacing: 2px; gap: 8px; } .brand-mark { width: 29px; height: 29px; font-size: 22px; } .brand small { font-size: 6px; letter-spacing: 1.9px; } .toolbar { gap: 5px; } .tool-button { padding: 7px 8px; font-size: 9px; } .game-frame { aspect-ratio: 16 / 10; } .game-frame canvas { object-fit: contain; } .hud { inset: 13px 13px auto; gap: 12px; } .vitals { width: 158px; } .hud-label { font-size: 7px; letter-spacing: .8px; } .hud-label span:last-child, .supplies { font-size: 8px; } .floor-status { width: 155px; } .floor-topline { font-size: 7px; letter-spacing: .5px; gap: 8px; } .floor-topline span:last-child { font-size: 8px; } .hud-subline { font-size: 7px; } .floor-progress i { width: 28px; } .health-track { margin-top: 7px; } .run-note { left: 13px; right: 13px; bottom: 14px; font-size: 7px; } .run-note span:last-child { font-size: 6px; } .overlay { padding: 10px; } .menu-panel { padding: 18px 20px; } .title-panel { padding: 3px 0; } .title-sigil, .title-tags { display: none; } .title-panel .eyebrow { font-size: 6px; margin-bottom: 12px; letter-spacing: 2.4px; } .title-panel .menu-heading { letter-spacing: 3px; padding-left: 3px; font-size: clamp(29px, 7vw, 45px); } .title-panel .menu-copy { margin: 10px auto 11px; font-size: 11px; } .title-description { font-size: 9px; line-height: 1.65; max-width: 255px; margin-bottom: 16px; } .primary-button { font-size: 9px; padding: 11px 15px; width: 215px; } .menu-hint { font-size: 6px; margin-top: 11px; } .menu-heading { font-size: 31px; } .menu-copy { font-size: 10px; margin: 10px auto 15px; } .help-panel .menu-heading { font-size: 25px; } .help-controls { grid-template-columns: 120px 1fr; gap: 6px 10px; font-size: 9px; margin: 11px auto; } .help-panel .menu-copy { font-size: 9px; margin-top: 9px; } .help-tip { font-size: 8px; padding-top: 9px; } .help-panel .eyebrow { font-size: 7px; margin-bottom: 8px; } .relic-panel { padding: 15px 17px; } .relic-panel .menu-heading { font-size: 26px; } .relic-panel .eyebrow { font-size: 7px; margin-bottom: 10px; } .relic-panel .menu-copy { margin: 7px auto 13px; font-size: 9px; } .relic-cards { gap: 8px; } .relic-card { padding: 15px 10px 10px; min-height: 140px; } .relic-card strong { font-size: 14px; margin-bottom: 7px; } .relic-symbol { font-size: 20px; margin-bottom: 10px; } .relic-description { font-size: 8px; min-height: 25px; } .relic-select { font-size: 6px; letter-spacing: .4px; margin-top: 11px; padding-top: 8px; } .relic-number { font-size: 7px; top: 8px; right: 8px; } .combo-badge { top: 91px; right: 18px; } .combo-badge strong { font-size: 25px; } .control-legend { font-size: 8px; gap: 10px; } .control-legend kbd { font-size: 7px; padding: 2px 4px; min-width: 15px; } .below-stage { padding: 16px 0; } .page-caption { font-size: 10px; gap: 15px; margin-top: 13px; } .page-caption span { font-size: 7px; } .run-stats { margin: 15px 0; padding: 12px 0; } .run-stats strong { font-size: 19px; } .run-stats span { font-size: 6px; } }
+@media (max-width: 420px) { .brand-mark { display: none; } .brand { font-size: 11px; } .brand small { font-size: 5px; } .tool-button { padding: 6px; font-size: 8px; } .game-frame { aspect-ratio: 4 / 3; } .floor-topline span:first-child { max-width: 102px; } .title-description { max-width: 225px; } .menu-panel { padding: 13px; } .help-controls { grid-template-columns: 105px 1fr; gap: 7px; font-size: 8px; } .help-panel .menu-copy { display: none; } .relic-panel .menu-copy { margin-bottom: 8px; } .relic-card { padding: 12px 8px 9px; } .relic-card strong { font-size: 12px; } .relic-description { font-size: 7px; } .relic-number { display: none; } .page-caption span { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } .relic-card:hover { transform: none; } }

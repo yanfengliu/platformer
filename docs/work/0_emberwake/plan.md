@@ -28,11 +28,11 @@ Use dependency-free ES modules and Canvas at 640×360 with fixed simulation step
 
 ## Implementation steps
 
-- Active: core worker owns physics/world/combat and simulation tests in .worktrees/core.
+- Core worker reports 15 simulation checks passing, including an input-only three-floor victory; handoff commit and independent acceptance pending.
 - Active: visual worker owns authored pixel-art renderer in .worktrees/visual.
 - Active: app worker owns shell, input, audio, tooling, CI and repo instructions in .worktrees/app.
 - Pending: integration, headless acceptance, independent review, fixes, main delivery, resource cleanup.
 
 ## Outcome
 
-Pending. Record the verified revision, checks and limitations at closure.
+Pending. Fleet work-document shape check passed after placing module contracts in design.md. Core found an unreachable optional platform branch, added an approach step, and reports a 120-floor reachability gate passing after observing the old geometry fail. Worker claims remain pending integrated acceptance.

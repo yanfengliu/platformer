@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101b1d">
+    <meta name="description" content="Emberwake — an original pixel-art roguelike. Enter the drowned keep, master the blade, and kindle another life.">
+    <title>Emberwake — The Drowned Keep</title>
+    <link rel="stylesheet" href="./src/style.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="masthead">
+        <a class="brand" href="./" aria-label="Emberwake home"><span class="brand-mark" aria-hidden="true">✦</span><span>EMBERWAKE<small>THE DROWNED KEEP</small></span></a>
+        <div class="toolbar" aria-label="Game settings">
+          <span class="live-tag"><span aria-hidden="true"></span>ROGUELIKE / 01</span>
+          <button class="tool-button" id="mute-button" type="button" aria-pressed="false" title="Mute audio (M)">Sound on</button>
+          <button class="tool-button" id="help-button" type="button" aria-haspopup="dialog" title="Show controls (H)">Controls</button>
+          <button class="tool-button" id="pause-button" type="button" disabled title="Pause (Escape)">Pause</button>
+        </div>
+      </header>
+
+      <section class="game-frame" aria-label="Emberwake game">
+        <canvas id="game" width="640" height="360" tabindex="0" aria-label="Game view. A and D move, Space jumps, J attacks, K rolls, F heals, E interacts, Escape pauses."></canvas>
+        <div class="stage-vignette" aria-hidden="true"></div>
+        <div class="hud" id="hud" hidden>
+          <div class="vitals">
+            <div class="hud-label"><span>THE REKINDLED</span><span id="health-text">100 / 100</span></div>
+            <div class="health-track" id="health-meter" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="health-fill"></div></div>
+            <div class="supplies"><span class="flask" aria-hidden="true">◆</span><span id="flask-text">3 / 3 flasks</span><kbd>F</kbd><span class="divider">/</span><span class="gold-icon" aria-hidden="true">✧</span><span id="gold-text">0</span></div>
+          </div>
+          <div class="floor-status">
+            <div class="floor-topline"><span id="floor-name">01 · THE DROWNED KEEP</span><span id="run-clock">00:00</span></div>
+            <div class="floor-progress" aria-label="Run progress"><span data-floor="1"></span><i></i><span data-floor="2"></span><i></i><span data-floor="3"></span></div>
+            <div class="hud-subline" id="floor-objective">Clear the floor to open the gate</div>
+          </div>
+        </div>
+        <div class="combo-badge" id="combo-badge" hidden aria-hidden="true"><strong id="combo-value">0</strong><span>CHAIN</span></div>
+        <div class="overlay" id="overlay"></div>
+        <div class="run-note" id="run-note" hidden><span id="kill-text">0 slain</span><span id="seed-text">SEED —</span></div>
+      </section>
+
+      <footer class="below-stage">
+        <div class="control-legend" aria-label="Keyboard controls">
+          <span><kbd>A</kbd><kbd>D</kbd> Move</span><span><kbd>SPACE</kbd> Jump × 2</span><span><kbd>J</kbd> Strike</span><span><kbd>K</kbd> Roll</span><span><kbd>F</kbd> Heal</span><span><kbd>E</kbd> Use</span>
+        </div>
+        <span class="footnote">A NEW LIFE. THE SAME FIRE.</span>
+      </footer>
+      <p class="page-caption">Three depths. One way out.<span>Original art · Procedural rooms · Permadeath</span></p>
+      <p class="screen-reader-only" id="announcer" role="status" aria-live="polite" aria-atomic="true"></p>
+    </main>
+    <noscript><p class="no-script">Emberwake needs JavaScript. Enable it, then reload to enter the keep.</p></noscript>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

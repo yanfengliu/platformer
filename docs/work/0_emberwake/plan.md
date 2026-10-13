@@ -1,6 +1,6 @@
 # Emberwake playable roguelike platformer
 
-Status: active
+Status: complete
 Owner: Codex coordinator
 Created: 2026-10-13
 Updated: 2026-10-13
@@ -24,7 +24,7 @@ Use dependency-free ES modules and Canvas at 640×360 with fixed simulation step
 - [x] Reproducible generated rooms support three floors, relic choices, healing, a boss, victory, and death/retry.
 - [x] Title, pause, controls, upgrade choice, HUD, mute, and responsive nearest-neighbor rendering work through actual input.
 - [x] Simulation gates, syntax/build, dependency audit, browser controls, representative rendered states and viewports, and independent integrated review pass within their documented bounds.
-- [ ] Checked code is on main and pushed; task-owned worktrees, servers, browsers, and disposable evidence are cleaned.
+- [x] Checked code is on main and pushed; task-owned worktrees, servers, browsers, and disposable evidence are cleaned.
 
 ## Implementation steps
 
@@ -32,8 +32,8 @@ Use dependency-free ES modules and Canvas at 640×360 with fixed simulation step
 - Passing: npm check, 24 simulation/input tests, build, install/audit with zero dependencies, real-control browser smoke and 720px layout.
 - Reviewed and accepted: [round 0](reviews/0_integration.md) resolves precision jumps; [round 1](reviews/1_integration.md) accepts final product 03198de and the compact-menu repair with browser bounds and clicks.
 - Passing: actual-key three-floor victory (61.80s, 20 kills, three upgrades), death/victory retries, keyboard/mouse/healing, source and built entry, audio signal/mute and reduced motion, inspected desktop/720px/320px renders.
-- Browser/server/daemon and child cleanup verified. Pending: main delivery, remote CI, worktree/evidence cleanup and closure.
+- Delivered main revision 899056b48997099259a91064f25e82dbaa0f0f77 and pushed to origin. [Remote CI](https://github.com/yanfengliu/platformer/actions/runs/38431821038) completed successfully with install, audit, check, test and build. Five task-owned worktrees and merged branches were removed; owned browser/server/daemon children and port cleanup were verified. Disposable acceptance output was deleted at closure.
 
 ## Outcome
 
-Product acceptance passes at 03198de1bb032ea65b19850f653102ba68145540. Fleet work-document shape check passed. Core found an unreachable optional platform branch, added an approach step, and observed the same 120-floor gate pass after the old geometry failed. Both independent-review findings are resolved. Main push, remote CI, and worktree/evidence cleanup remain before complete status. No physical-speaker listening, other browser engines, gamepad/touch, or exhaustive seed/performance checks are claimed.
+Complete. Product acceptance passes at 03198de1bb032ea65b19850f653102ba68145540; delivered main 899056b48997099259a91064f25e82dbaa0f0f77 has the same product bytes plus retained reviews and devlog. Local check/test/build/audit, actual-key three-floor victory, visual and audio-signal acceptance, independent review, fleet document-shape gate and remote CI pass. Both findings are resolved; no required check is open. Initial remote push was rejected by automatic review; the exact recorded fleet R14 grant and matching signed-in account/repository owner were verified, and retry of the same ordinary push was approved. Task-owned processes, worktrees, branches and temporary evidence were cleaned without touching unrelated resources. No physical-speaker listening, other browser engines, gamepad/touch, or exhaustive seed/performance checks are claimed. The final closure commit changes only this document.

@@ -15,7 +15,7 @@ Original art, generated sound, keyboard/mouse controls, procedural rooms, melee 
 
 ## Approach
 
-Use dependency-free ES modules and Canvas at 640×360 with fixed simulation steps. Shared interfaces and file ownership are in [contract.md](contract.md). Three workers implement core, rendering, and app/tooling in isolated worktrees; integration owner merges checked commits, exercises the real control path headlessly, obtains independent review, then merges and pushes main. The new repo has no debugging instrument; simulation exports and read-only browser state provide the first diagnostic probes.
+Use dependency-free ES modules and Canvas at 640×360 with fixed simulation steps. Shared interfaces and file ownership are in [design.md](design.md). Three workers implement core, rendering, and app/tooling in isolated worktrees; integration owner merges checked commits, exercises the real control path headlessly, obtains independent review, then merges and pushes main. The new repo has no debugging instrument; simulation exports and read-only browser state provide the first diagnostic probes.
 
 ## Acceptance criteria
 

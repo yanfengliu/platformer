@@ -19,20 +19,21 @@ Use dependency-free ES modules and Canvas at 640×360 with fixed simulation step
 
 ## Acceptance criteria
 
-- [ ] Movement includes acceleration, variable jump, double jump, coyote time, jump buffering, and collision without tunneling.
-- [ ] Combat includes a sword combo, roll immunity, telegraphed enemies, hit flashes, knockback, sparks, damage numbers, hit-stop, camera shake, and sound.
-- [ ] Reproducible generated rooms support three floors, relic choices, healing, a boss, victory, and death/retry.
-- [ ] Title, pause, controls, upgrade choice, HUD, mute, and responsive nearest-neighbor rendering work through actual input.
-- [ ] Simulation gates, syntax/build, dependency audit, browser controls, representative rendered states and viewports, and independent integrated review pass within their documented bounds.
+- [x] Movement includes acceleration, variable jump, double jump, coyote time, jump buffering, and collision without tunneling.
+- [x] Combat includes a sword combo, roll immunity, telegraphed enemies, hit flashes, knockback, sparks, damage numbers, hit-stop, camera shake, and sound.
+- [x] Reproducible generated rooms support three floors, relic choices, healing, a boss, victory, and death/retry.
+- [x] Title, pause, controls, upgrade choice, HUD, mute, and responsive nearest-neighbor rendering work through actual input.
+- [x] Simulation gates, syntax/build, dependency audit, browser controls, representative rendered states and viewports, and independent integrated review pass within their documented bounds.
 - [ ] Checked code is on main and pushed; task-owned worktrees, servers, browsers, and disposable evidence are cleaned.
 
 ## Implementation steps
 
-- Core worker reports 15 simulation checks passing, including an input-only three-floor victory; handoff commit and independent acceptance pending.
-- Active: visual worker owns authored pixel-art renderer in .worktrees/visual.
-- Active: app worker owns shell, input, audio, tooling, CI and repo instructions in .worktrees/app.
-- Pending: integration, headless acceptance, independent review, fixes, main delivery, resource cleanup.
+- Integrated: core 75d2dcd, visual 13baf63, app 03e2426, precision-jump repair c6a02f2; product revision 497a3ce.
+- Passing: npm check, 24 simulation/input tests, build, install/audit with zero dependencies, real-control browser smoke and 720px layout.
+- Reviewed and accepted: [round 0](reviews/0_integration.md) resolves precision jumps; [round 1](reviews/1_integration.md) accepts final product 03198de and the compact-menu repair with browser bounds and clicks.
+- Passing: actual-key three-floor victory (61.80s, 20 kills, three upgrades), death/victory retries, keyboard/mouse/healing, source and built entry, audio signal/mute and reduced motion, inspected desktop/720px/320px renders.
+- Browser/server/daemon and child cleanup verified. Pending: main delivery, remote CI, worktree/evidence cleanup and closure.
 
 ## Outcome
 
-Pending. Fleet work-document shape check passed after placing module contracts in design.md. Core found an unreachable optional platform branch, added an approach step, and reports a 120-floor reachability gate passing after observing the old geometry fail. Worker claims remain pending integrated acceptance.
+Product acceptance passes at 03198de1bb032ea65b19850f653102ba68145540. Fleet work-document shape check passed. Core found an unreachable optional platform branch, added an approach step, and observed the same 120-floor gate pass after the old geometry failed. Both independent-review findings are resolved. Main push, remote CI, and worktree/evidence cleanup remain before complete status. No physical-speaker listening, other browser engines, gamepad/touch, or exhaustive seed/performance checks are claimed.

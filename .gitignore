@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Task-owned worktrees and verification output
+.worktrees/
+output/
+tmp/
+.playwright-cli/

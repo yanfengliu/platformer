@@ -135,6 +135,39 @@ test('a press just before landing buffers the next jump', () => {
   assert.equal(game.player.jumps, 1);
 });
 
+for (const delay of ['landing buffer', 'hit-stop']) {
+  test(`a released tap stays short when its jump waits for ${delay}`, () => {
+    function jumpHeight(held) {
+      const game = isolated();
+      game.world.platforms = [game.world.platforms[0]];
+      if (delay === 'landing buffer') {
+        game.player.y = GROUND_Y - game.player.h - 8;
+        game.player.vy = 220;
+        game.player.grounded = false;
+        game.player.coyote = 0;
+        game.player.jumps = 2;
+      } else game.hitStop = 0.04;
+      updateGame(game, { jumpPressed: true, jumpHeld: true }, STEP);
+      let peak = GROUND_Y - game.player.h;
+      let launches = 0;
+      for (let frame = 0; frame < 180; frame += 1) {
+        updateGame(game, { jumpHeld: held }, STEP);
+        launches += drainEvents(game).filter((event) => event.type === 'jump').length;
+        if (launches > 0) peak = Math.min(peak, game.player.y);
+        if (launches > 0 && game.player.grounded) break;
+      }
+      assert.equal(launches, 1, 'the queued press must launch exactly once');
+      assert.ok(game.player.grounded, 'the complete jump arc must return to ground');
+      return GROUND_Y - game.player.h - peak;
+    }
+    const tap = jumpHeight(false);
+    const hold = jumpHeight(true);
+    assert.ok(tap < 30, `released ${delay} tap rose ${tap.toFixed(2)}px`);
+    assert.ok(hold > 65, `held ${delay} jump rose only ${hold.toFixed(2)}px`);
+    assert.ok(hold - tap > 40, 'the delayed jump must retain variable height control');
+  });
+}
+
 test('swept collision lands on thin one-way platforms and supports deliberate drop-through', () => {
   const game = isolated();
   game.world.platforms.push({ x: 50, y: 310, w: 100, h: 2, oneWay: true });

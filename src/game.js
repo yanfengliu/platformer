@@ -196,6 +196,7 @@ function swordHits(game) {
 function updatePlayer(game, input, dt) {
   const player = game.player;
   const wasGrounded = player.grounded;
+  let jumpStarted = false;
   timers(player, dt);
   if (wasGrounded) {
     player.coyote = COYOTE;
@@ -245,10 +246,12 @@ function updatePlayer(game, input, dt) {
       player.coyote = 0;
       player.grounded = false;
       player.rollTime = 0;
+      jumpStarted = true;
       emit(game, 'jump', centerX(player), player.y + player.h, { amount: player.jumps });
     }
   }
-  if (player.jumpHeld && !input.jumpHeld && player.vy < -120) player.vy *= 0.47;
+  // A buffered press may launch after release; apply that release on its first frame.
+  if ((jumpStarted || player.jumpHeld) && !input.jumpHeld && player.vy < -120) player.vy *= 0.47;
   player.jumpHeld = Boolean(input.jumpHeld);
   if (player.rollTime > 0) player.vx = player.facing * 470;
   else if (player.hurtTime > 0) player.vx = approach(player.vx, 0, 500 * dt);

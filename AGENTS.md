@@ -4,6 +4,8 @@
 
 Emberwake is an original browser roguelike platformer with authored pixel art, precise movement, readable combat, and a complete three-floor run. It uses Node 24 and dependency-free ES modules, Canvas, and WebAudio. No commercial game assets, persistent progression, multiplayer, or external runtime services.
 
+Local execution rules: [docs/policies/local-rules.md](docs/policies/local-rules.md).
+
 ## Fleet constitution
 
 This repository inherits the generated [parent fleet canon](../AGENTS.md), whose versioned master is [fleet/FLEET.md](../fleet/FLEET.md). Keep repository rules here concise; do not duplicate or edit the fleet canon. Fleet self-improvement workflow: [../fleet/docs/skills/self-improvement/SKILL.md](../fleet/docs/skills/self-improvement/SKILL.md).

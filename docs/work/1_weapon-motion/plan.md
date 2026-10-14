@@ -26,7 +26,8 @@ Existing drawSlash reads continuous attack progress, but character weapon geomet
 
 ## Implementation steps
 
-- Active: delegate renderer/pose/regression repair. Pending: acceptance, independent review, integration, main delivery and cleanup.
+- Worker reports physical-weapon geometry regressions green; implementation handoff pending. Coordinator reproduced frozen sword through actual J input: physical blade centroid excursion was below 0.009px horizontal and 0.037px vertical across all three combo strikes. Tiny edge-pixel differences were excluded as antialiasing noise.
+- Owner reiterated headless operation and no terminal popups. The previous browser helper was closed; replacement helper forces windowsHide and hidden server launch, with only recorded task-owned processes managed. Pending: integrated render/control acceptance, independent review, main delivery and cleanup.
 
 ## Outcome
 

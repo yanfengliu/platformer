@@ -1,7 +1,8 @@
 // Bounds: actual createRenderer Canvas drawing commands at native 640x360, with
 // effects excluded by physical weapon colors. Covers three combos, all enemies,
 // both facings, windup/contact/return, shot transition, cancellation and clock
-// freezes. This geometry gate does not certify raster quality or browser input.
+// freezes and actual boss damage crossing half health during windup. This
+// geometry gate does not certify raster quality or browser input.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
@@ -153,6 +154,64 @@ test('weapon motion scales with faster combos and the boss half-health windup', 
     assert.deepEqual(weapon(render(normal.game), 'boss'), weapon(render(faster.game), 'boss'));
   }
 });
+
+for (const kind of ['melee', 'volley']) {
+  test(`boss ${kind}: damage crossing half health preserves this windup pose and speeds the next windup`, () => {
+    const step = 1 / 120;
+    const game = createGame(0);
+    // Reach the generated boss using the real floor transition; isolate combat
+    // fixtures so only the timing and damage being checked affect this sample.
+    for (let floor = 1; floor < 3; floor++) {
+      game.enemies.forEach(enemy => { enemy.dead = true; enemy.hp = 0; });
+      game.player.x = game.world.exit.x;
+      game.player.y = game.world.exit.y;
+      updateGame(game, { interactPressed: true }, step);
+      assert.equal(game.floor, floor + 1);
+    }
+    const boss = game.enemies.find(enemy => enemy.type === 'boss');
+    game.enemies = [boss];
+    game.world.pickups = [];
+    game.player.x = boss.x - 60;
+    game.player.y = boss.y + boss.h - game.player.h;
+    game.player.facing = 1;
+    game.player.invulnerable = 10;
+    boss.hp = 180;
+    boss.cooldown = 0;
+    boss.attackCount = kind === 'volley' ? 2 : 0;
+    updateGame(game, {}, step);
+    assert.equal(boss.state, 'windup');
+    assert.equal(boss.attackKind, kind);
+    assert.equal(boss.windup, .88, 'the attack begins above half health with the original slow timing');
+    while (boss.windup > .66) updateGame(game, {}, step);
+    updateGame(game, { attackPressed: true }, step);
+    while (1 - game.player.attackTime / game.player.attackDuration < .17 - step / game.player.attackDuration) updateGame(game, {}, step);
+    const control = structuredClone(game);
+    control.player.hitEnemies.push(boss.id);
+    updateGame(game, {}, step);
+    updateGame(control, {}, step);
+    const unhit = control.enemies[0];
+    assert.equal(boss.hp, 161, 'an actual first-combo hit must cross half of the 340HP boss');
+    assert.equal(unhit.hp, 180);
+    assert.equal(boss.state, 'windup', 'the Warden preserves its current windup on damage');
+    assert.equal(boss.windup, unhit.windup, 'hit and control must have identical remaining clocks');
+    const hitWeapon = weapon(render(game), 'boss');
+    const controlWeapon = weapon(render(control), 'boss');
+    assert.deepEqual(offsets(hitWeapon), offsets(controlWeapon), 'health alone must not rewind the actual rendered axe');
+    assert.ok(distance(centroid(hitWeapon), centroid(controlWeapon)) <= 1, 'only the subpixel damage knockback may translate the current axe');
+    assert.equal(boss.windupDuration, .88, 'current windup retains the duration selected above half health');
+    let departed = false;
+    let nextStarted = false;
+    for (let frame = 0; frame < 360 && !nextStarted; frame++) {
+      updateGame(game, {}, step);
+      if (boss.state !== 'windup') departed = true;
+      if (departed && boss.state === 'windup') nextStarted = true;
+    }
+    assert.ok(nextStarted, 'the simulation must actually start the next attack');
+    assert.equal(boss.hp, 161);
+    assert.equal(boss.windupDuration, .88 * .78, 'the next attack selects the existing fast phase');
+    assert.equal(boss.windup, boss.windupDuration, 'metadata must describe the real next windup timer');
+  });
+}
 
 test('archer nocked arrow disappears on the simulation step that creates the projectile', () => {
   const game = createGame(0);

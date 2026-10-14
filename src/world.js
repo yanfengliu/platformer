@@ -1,3 +1,5 @@
+import { merchantStock, rollGear } from './roguelike.js';
+
 // World pixels are simulation units. Every generated floor has a safe ground route.
 export const GROUND_Y = 392;
 
@@ -51,15 +53,24 @@ export function createWorld(seed, floor = 1) {
   pickups.push({ id: `heal-${floor}`, x: rooms[3].x + rooms[3].w - 50, y: GROUND_Y - 12, type: 'heal', amount: 22, collected: false });
 
   const enemySpawns = [];
-  const add = (room, offset, type) => enemySpawns.push({ id: `f${floor}-e${enemySpawns.length}`, type, x: room.x + offset, y: GROUND_Y });
+  const add = (room, offset, type, elite = false) => enemySpawns.push({ id: `f${floor}-e${enemySpawns.length}`, type, x: room.x + offset, y: GROUND_Y, elite });
+  // Paired roles protect each other's recovery: front guards and committed
+  // charges resist a held sword while ranged hazards demand vertical movement.
   add(rooms[1], 160, 'walker');
-  add(rooms[1], rooms[1].w - 125, floor > 1 ? 'brute' : 'walker');
-  add(rooms[2], rooms[2].w / 2, 'archer');
-  add(rooms[3], 120, 'walker');
-  add(rooms[3], rooms[3].w - 130, 'brute');
-  if (floor > 1) add(rooms[4], 95, 'archer');
+  add(rooms[1], 255, 'shield', floor > 1 && random() < .5);
+  add(rooms[1], rooms[1].w - 75, 'archer');
+  add(rooms[2], 140, 'lancer', floor > 1 && random() < .5);
+  add(rooms[2], rooms[2].w - 125, 'alchemist');
+  add(rooms[3], 120, 'brute', floor > 1);
+  add(rooms[3], 230, random() < .5 ? 'lancer' : 'shield');
+  add(rooms[3], rooms[3].w - 70, floor > 1 ? 'alchemist' : 'archer');
   if (floor === 3) add(rooms[5], 330, 'boss');
-  else add(rooms[5], 230, floor === 2 ? 'brute' : 'archer');
+  else {
+    add(rooms[5], 220, floor === 2 ? 'lancer' : 'shield', true);
+    add(rooms[5], 350, floor === 2 ? 'archer' : 'alchemist');
+  }
+  pickups.push({ id: `cache-${floor}`, x: rooms[2].x + 68, y: GROUND_Y - 18, type: 'gear', item: rollGear(seededRandom(seed ^ Math.imul(floor, 0x27d4eb2d)), floor), collected: false });
+  const merchants = [{ id: `merchant-${floor}`, name: 'The coal trader', x: relicRoom.x + 85, y: GROUND_Y, stock: merchantStock(seededRandom(seed ^ Math.imul(floor, 0x165667b1)), floor) }];
 
   return {
     width: position,
@@ -70,6 +81,7 @@ export function createWorld(seed, floor = 1) {
     pickups,
     decor,
     enemySpawns,
+    merchants,
     spawn: { x: 72, y: GROUND_Y - 34 },
   };
 }

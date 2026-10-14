@@ -376,19 +376,22 @@ function heroWeaponPose(player) {
 function windupProgress(enemy) {
   // The Warden preserves a windup across damage, even if health crosses its fast
   // phase threshold. Use the duration the simulation chose for this attack.
-  const fallback = { walker: .5, archer: .72, brute: .8, boss: .88 }[enemy.type] || .5;
+  const fallback = { walker: .5, archer: .72, brute: .8, boss: .88, shield: .62, lancer: .74, alchemist: .86 }[enemy.type] || .5;
   const phaseSpeed = enemy.type === 'boss' && enemy.hp < enemy.maxHp / 2 ? .78 : 1;
   const duration = enemy.windupDuration > 0 ? enemy.windupDuration : fallback * phaseSpeed;
   return clamp(1 - (enemy.windup || 0) / duration, 0, 1);
 }
 function enemyWeaponPose(enemy) {
-  const idle = { walker: [12, -17, -1.2], brute: [21, -23, -Math.PI / 2], boss: [29, -38, -Math.PI / 2], archer: [12, -21, 0] }[enemy.type];
+  const idle = { walker: [12, -17, -1.2], brute: [21, -23, -Math.PI / 2], boss: [29, -38, -Math.PI / 2], archer: [12, -21, 0], shield: [14, -20, -1.1], lancer: [12, -23, -.45], alchemist: [10, -20, .2] }[enemy.type];
   const ready = enemy.type === 'boss' && enemy.attackKind === 'volley'
     ? [25, -50, -.9]
-    : { walker: [4, -27, -2.45], brute: [5, -42, -2.5], boss: [10, -58, -2.4], archer: [18, -22, -.05] }[enemy.type];
+    : { walker: [4, -27, -2.45], brute: [5, -42, -2.5], boss: [10, -58, -2.4], archer: [18, -22, -.05], shield: [0, -35, -2.35], lancer: [-1, -26, -.08], alchemist: [-9, -36, -1.1] }[enemy.type];
   if (enemy.state === 'windup') return poseBetween(idle, ready, windupProgress(enemy));
   if (!(enemy.attackTime > 0)) return idle;
   const progress = attackProgress(enemy);
+  if (enemy.type === 'shield') return poseAlong(progress, [[0, ready], [.2, [18, -29, -1]], [.5, [23, -12, .85]], [.8, [17, -17, 1.15]], [1, idle]]);
+  if (enemy.type === 'lancer') return poseAlong(progress, [[0, ready], [.14, [20, -25, 0]], [.54, [25, -22, .05]], [.8, [17, -21, .3]], [1, idle]]);
+  if (enemy.type === 'alchemist') return poseAlong(progress, [[0, ready], [.18, [16, -32, -.2]], [.5, [23, -24, .5]], [.8, [15, -17, .85]], [1, idle]]);
   if (enemy.type === 'archer') return poseAlong(progress, [[0, [18, -22, -.05]], [.3, [11, -20, .35]], [.58, [19, -20, 0]], [1, idle]]);
   if (enemy.attackKind === 'volley') return poseAlong(progress, [[0, ready], [.2, [35, -43, -.55]], [.58, [31, -43, -.7]], [1, idle]]);
   const contact = { walker: [11, -25, -1.2], brute: [17, -36, -1.2], boss: [29, -49, -1.05] }[enemy.type];
@@ -669,6 +672,118 @@ function drawBrute(ctx, enemy, time, flash) {
   rect(ctx, '#3e504e', 0, -36, 5, 2);
 }
 
+function drawShield(ctx, enemy, time, flash) {
+  const pose = enemyWeaponPose(enemy);
+  const step = enemy.grounded && Math.abs(enemy.vx || 0) > 4 ? Math.round(Math.sin(time * 7) * 2) : 0;
+  rect(ctx, '#131d2a', -11 + step, -10, 8, 10);
+  rect(ctx, '#59646e', -10 + step, -10, 5, 7);
+  rect(ctx, '#96998a', -12 + step, -2, 10, 2);
+  rect(ctx, '#182532', 3 - step, -10, 8, 10);
+  rect(ctx, '#788086', 4 - step, -9, 5, 7);
+  rect(ctx, '#bbb59b', 3 - step, -2, 10, 2);
+  polygon(ctx, '#10222c', [[-13, -30], [-7, -35], [8, -35], [13, -29], [10, -10], [-10, -10]]);
+  polygon(ctx, flash ? '#f2eddb' : '#526b78', [[-9, -31], [7, -31], [10, -26], [7, -12], [-8, -13]]);
+  rect(ctx, '#82949a', -8, -30, 4, 15);
+  rect(ctx, '#314b60', 0, -27, 6, 13);
+  rect(ctx, '#a9ad98', -9, -18, 18, 3);
+  rect(ctx, '#483e37', -10, -12, 21, 3);
+  rect(ctx, '#c0a377', 0, -12, 4, 3);
+  polygon(ctx, '#142531', [[-9, -34], [-8, -41], [-4, -45], [6, -45], [11, -39], [9, -32]]);
+  rect(ctx, '#87969a', -5, -42, 13, 7);
+  rect(ctx, '#c2baa1', -4, -42, 11, 2);
+  rect(ctx, '#1b333d', 0, -39, 9, 2);
+  rect(ctx, '#e9c397', 2, -39, 5, 1);
+  // The mace arm remains visible above the shield, including the return stroke.
+  drawWeaponArm(ctx, pose, [-6, -27], '#657886', '#c9bfa6', 4);
+  weaponRect(ctx, '#67533f', pose, -1, -19, 3, 22, -Math.PI / 2);
+  weaponPolygon(ctx, '#9ca3b6', pose, [[-5, -21], [-3, -25], [4, -25], [8, -20], [7, -13], [2, -10], [-5, -13]], -Math.PI / 2);
+  weaponRect(ctx, '#d0cabb', pose, -2, -22, 5, 3, -Math.PI / 2);
+  weaponRect(ctx, '#63748b', pose, 4, -20, 3, 5, -Math.PI / 2);
+  const guarding = !!enemy.guarding;
+  const shieldX = guarding ? 12 : 7;
+  const shieldY = guarding ? -23 : -17;
+  armSegment(ctx, '#87949a', [6, -25], [shieldX, shieldY], 4);
+  polygon(ctx, '#0b1f2b', [[shieldX - 5, shieldY - 12], [shieldX + 7, shieldY - 12], [shieldX + 9, shieldY + 7], [shieldX + 2, shieldY + 14], [shieldX - 6, shieldY + 7]]);
+  polygon(ctx, guarding ? '#648b9a' : '#445f71', [[shieldX - 3, shieldY - 10], [shieldX + 5, shieldY - 10], [shieldX + 7, shieldY + 6], [shieldX + 2, shieldY + 11], [shieldX - 4, shieldY + 6]]);
+  rect(ctx, '#b8b6a1', shieldX, shieldY - 8, 2, 16);
+  rect(ctx, '#a49776', shieldX - 3, shieldY - 2, 9, 3);
+  rect(ctx, '#d6ccb1', shieldX, shieldY - 2, 2, 2);
+}
+
+function drawLancer(ctx, enemy, time, flash, reducedMotion) {
+  const pose = enemyWeaponPose(enemy);
+  const charging = enemy.attackTime > 0 && enemy.attackKind === 'charge';
+  const stride = enemy.grounded && Math.abs(enemy.vx || 0) > 4 ? Math.round(Math.sin(time * (charging ? 18 : 9)) * 4) : 0;
+  rect(ctx, '#171e27', -8 + stride, -11, 5, 11);
+  rect(ctx, '#68775e', -7 + stride, -10, 3, 8);
+  rect(ctx, '#a9b08b', -9 + stride, -2, 8, 2);
+  rect(ctx, '#263229', 3 - stride, -11, 5, 11);
+  rect(ctx, '#879678', 4 - stride, -10, 3, 8);
+  rect(ctx, '#c4c6a1', 3 - stride, -2, 9, 2);
+  polygon(ctx, '#18272c', [[-9, -33], [4, -34], [10, -27], [7, -10], [-8, -10], [-11, -21]]);
+  polygon(ctx, flash ? '#eeffe0' : '#5b7a63', [[-6, -31], [3, -32], [7, -26], [4, -13], [-6, -13]]);
+  rect(ctx, '#95ab7c', -5, -30, 3, 15);
+  rect(ctx, '#355749', 1, -27, 4, 13);
+  rect(ctx, '#3c3d30', -8, -14, 16, 3);
+  rect(ctx, '#c1a57d', 2, -14, 3, 3);
+  polygon(ctx, '#16272d', [[-6, -35], [-5, -42], [4, -45], [10, -40], [9, -31], [-3, -31]]);
+  polygon(ctx, '#839178', [[-3, -40], [3, -42], [7, -38], [7, -33], [-2, -33]]);
+  rect(ctx, '#243d37', 2, -38, 8, 2);
+  rect(ctx, '#f2cf95', 4, -38, 4, 1);
+  polygon(ctx, '#b8714e', [[-5, -42], [-10, -49], [-4, -48], [-1, -51], [4, -47], [5, -43]]);
+  rect(ctx, '#e3a66b', -4, -47, 3, 3);
+  // Rear and front hands both travel with the shaft; the tip extends forward
+  // at contact so the committed charge has a different silhouette from melee.
+  const rear = weaponPoint(pose, -12, 0);
+  armSegment(ctx, '#718574', [-6, -27], rear, 3);
+  rect(ctx, '#b7c3a1', rear[0] - 2, rear[1] - 1, 3, 3);
+  drawWeaponArm(ctx, pose, [5, -28], '#789181', '#c6d1b3', 3);
+  weaponRect(ctx, '#716c48', pose, -24, -1, 53, 3);
+  weaponRect(ctx, '#a6976a', pose, -22, -1, 49, 1);
+  weaponPolygon(ctx, '#d0b59a', pose, [[27, -4], [38, 0], [27, 5], [30, 1]]);
+  weaponRect(ctx, '#f2dcc0', pose, 28, -2, 4, 1);
+  weaponRect(ctx, '#9c734e', pose, 24, -2, 4, 4);
+  if (charging && !reducedMotion) for (let i = 0; i < 3; i++) rect(ctx, '#bf9b6c', -20 - i * 9, -18 + i * 5, 6, 1);
+}
+
+function drawVial(ctx, pose, color = '#73d6ba') {
+  weaponRect(ctx, '#dac19a', pose, -2, -11, 4, 3);
+  weaponPolygon(ctx, '#25494b', pose, [[-2, -8], [2, -8], [5, -4], [4, 3], [-4, 3], [-5, -4]]);
+  weaponPolygon(ctx, color, pose, [[-1, -7], [1, -7], [3, -3], [3, 1], [-3, 1], [-3, -3]]);
+  weaponRect(ctx, '#c8f5d9', pose, -2, -4, 1, 4);
+}
+
+function drawAlchemist(ctx, enemy, time, flash) {
+  const pose = enemyWeaponPose(enemy);
+  const step = enemy.grounded && Math.abs(enemy.vx || 0) > 4 ? Math.round(Math.sin(time * 8) * 2) : 0;
+  rect(ctx, '#211e2c', -7 + step, -8, 5, 8);
+  rect(ctx, '#836c62', -8 + step, -2, 7, 2);
+  rect(ctx, '#2d2333', 3 - step, -8, 5, 8);
+  rect(ctx, '#b8987a', 3 - step, -2, 8, 2);
+  polygon(ctx, '#192334', [[-11, -28], [4, -30], [10, -23], [12, -5], [6, -7], [1, -3], [-5, -7], [-12, -5]]);
+  polygon(ctx, flash ? '#fff0dc' : '#78536c', [[-7, -27], [3, -27], [7, -22], [9, -9], [2, -6], [-7, -10]]);
+  rect(ctx, '#af827c', -6, -26, 3, 15);
+  rect(ctx, '#483d58', 0, -24, 4, 12);
+  polygon(ctx, '#b29778', [[-3, -22], [3, -22], [4, -8], [-5, -8]]);
+  rect(ctx, '#745c58', -8, -14, 16, 3);
+  rect(ctx, '#ddc6a0', 4, -14, 2, 3);
+  polygon(ctx, '#172a2e', [[-16, -29], [-10, -31], [-7, -26], [-8, -12], [-15, -12], [-18, -19]]);
+  rect(ctx, '#536f63', -15, -27, 5, 13);
+  rect(ctx, '#a7c0a0', -14, -25, 2, 8);
+  rect(ctx, '#d9bd8e', -13, -33, 3, 5);
+  polygon(ctx, '#302c3e', [[-7, -29], [-9, -39], [-5, -43], [4, -43], [9, -36], [7, -27]]);
+  rect(ctx, '#8b796d', -4, -38, 12, 8);
+  rect(ctx, '#15282d', -3, -36, 13, 4);
+  rect(ctx, '#a4e8c1', -2, -35, 3, 2);
+  rect(ctx, '#a4e8c1', 5, -35, 3, 2);
+  polygon(ctx, '#c0a184', [[3, -32], [10, -32], [12, -28], [6, -26], [2, -28]]);
+  rect(ctx, '#5e4852', 6, -30, 4, 2);
+  drawWeaponArm(ctx, pose, [5, -25], '#967581', '#d7b69c', 3);
+  // The simulation creates the thrown vial on entry to attack. The hand stays
+  // empty throughout that throw, then takes its next vial only after recovery.
+  if (!(enemy.attackTime > 0)) drawVial(ctx, pose);
+}
+
 function drawBoss(ctx, enemy, time, flash) {
   const weaponPose = enemyWeaponPose(enemy);
   const breathing = Math.round(Math.sin(time * 2.4));
@@ -735,6 +850,16 @@ function drawTelegraph(ctx, enemy, camera, time, reducedMotion) {
     for (let i = 0; i < 4; i++) rect(ctx, '#ffb982', attackX - 23 + i * 14, enemy.y + enemy.h - camera.y - 4, 2, 3);
     ctx.restore();
   }
+  if (enemy.type === 'lancer') {
+    const facing = enemy.facing || 1;
+    const floorY = enemy.y + enemy.h - camera.y;
+    const progress = windupProgress(enemy);
+    // Ground chevrons use the committed facing and grow with the real windup.
+    for (let i = 0; i < 4; i++) {
+      const markX = x + facing * (22 + i * 20);
+      polygon(ctx, i / 4 <= progress ? '#f4c28f' : '#845744', [[markX - facing * 4, floorY - 5], [markX + facing * 3, floorY - 2], [markX - facing * 4, floorY + 1], [markX - facing, floorY - 2]]);
+    }
+  }
 }
 
 function drawEnemy(ctx, enemy, camera, time, reducedMotion) {
@@ -749,9 +874,17 @@ function drawEnemy(ctx, enemy, camera, time, reducedMotion) {
   if (enemy.type === 'archer') drawArcher(ctx, enemy, time, flash);
   else if (enemy.type === 'brute') drawBrute(ctx, enemy, time, flash);
   else if (enemy.type === 'boss') drawBoss(ctx, enemy, time, flash);
+  else if (enemy.type === 'shield') drawShield(ctx, enemy, time, flash);
+  else if (enemy.type === 'lancer') drawLancer(ctx, enemy, time, flash, reducedMotion);
+  else if (enemy.type === 'alchemist') drawAlchemist(ctx, enemy, time, flash);
   else drawWalker(ctx, enemy, time, flash);
   ctx.restore();
   drawTelegraph(ctx, enemy, camera, time, reducedMotion);
+  if (enemy.elite) {
+    const markY = enemy.y - camera.y - (enemy.type === 'boss' ? 35 : 20);
+    polygon(ctx, '#efbd78', [[x - 5, markY], [x - 5, markY - 6], [x - 2, markY - 3], [x, markY - 8], [x + 2, markY - 3], [x + 5, markY - 6], [x + 5, markY]]);
+    rect(ctx, '#78493c', x - 3, markY - 1, 6, 1);
+  }
   if (enemy.hp < enemy.maxHp || enemy.type === 'boss') {
     const width = enemy.type === 'boss' ? 48 : 24;
     const healthY = enemy.y - camera.y - (enemy.type === 'boss' ? 21 : 6);
@@ -766,7 +899,7 @@ function drawPickup(ctx, pickup, camera, time, theme) {
   if (pickup.collected) return;
   const x = Math.round(pickup.x - camera.x);
   const y = Math.round(pickup.y - camera.y + Math.sin(time * 3 + pickup.x) * 2);
-  if (x < -35 || x > WIDTH + 35) return;
+  if (x < -35 || x > WIDTH + 35 || y < -50 || y > HEIGHT + 35) return;
   if (pickup.type === 'relic') {
     glow(ctx, x, y - 5, 47, theme.glow, .9);
     polygon(ctx, '#143a3b', [[x, y - 20], [x + 12, y - 6], [x, y + 10], [x - 12, y - 6]]);
@@ -775,6 +908,42 @@ function drawPickup(ctx, pickup, camera, time, theme) {
     rect(ctx, '#244f46', x - 7, y - 8, 14, 3);
     rect(ctx, '#f3efb3', x - 1, y - 8, 2, 3);
     pixelText(ctx, 'E RELIC', x, y + 16, '#98ceb4', 1, true);
+  } else if (pickup.type === 'gear') {
+    const color = { common: '#bfcab6', uncommon: '#87d9a1', rare: '#82bdf4', epic: '#d79eea' }[pickup.item?.rarity] || '#bfcab6';
+    glow(ctx, x, y, 25, color, .6);
+    // The square bracket frame and slot silhouette distinguish equipment from
+    // consumables even when the player cannot distinguish rarity colors.
+    for (const side of [-1, 1]) {
+      rect(ctx, color, x + side * 13 - (side > 0 ? 1 : 0), y - 12, 1, 5);
+      rect(ctx, color, x + side * 13 - (side > 0 ? 4 : 0), y - 12, 4, 1);
+      rect(ctx, color, x + side * 13 - (side > 0 ? 1 : 0), y + 6, 1, 5);
+      rect(ctx, color, x + side * 13 - (side > 0 ? 4 : 0), y + 10, 4, 1);
+    }
+    if (pickup.item?.slot === 'armor') {
+      polygon(ctx, '#152c34', [[x - 4, y - 10], [x + 4, y - 10], [x + 9, y - 5], [x + 5, y - 2], [x + 4, y + 8], [x - 5, y + 8], [x - 6, y - 2], [x - 10, y - 5]]);
+      polygon(ctx, color, [[x - 3, y - 8], [x + 3, y - 8], [x + 6, y - 5], [x + 3, y - 4], [x + 2, y + 6], [x - 3, y + 6], [x - 4, y - 4], [x - 7, y - 5]]);
+      rect(ctx, '#47606b', x - 2, y - 5, 3, 8);
+    } else if (pickup.item?.slot === 'charm') {
+      polygon(ctx, '#8d846c', [[x - 5, y - 10], [x - 7, y - 5], [x, y + 4], [x + 7, y - 5], [x + 5, y - 10], [x + 5, y - 5], [x, y + 1], [x - 5, y - 5]]);
+      polygon(ctx, color, [[x, y - 3], [x + 5, y + 2], [x, y + 9], [x - 5, y + 2]]);
+      rect(ctx, '#eff1c7', x - 1, y, 2, 4);
+    } else {
+      polygon(ctx, '#152c34', [[x - 4, y + 7], [x - 1, y + 1], [x - 7, y - 2], [x - 5, y - 5], [x, y - 2], [x + 5, y - 12], [x + 9, y - 12], [x + 7, y - 7], [x + 2, y], [x + 5, y + 3], [x + 3, y + 5], [x, y + 3], [x - 2, y + 9]]);
+      polygon(ctx, color, [[x + 1, y - 1], [x + 6, y - 11], [x + 8, y - 11], [x + 6, y - 7], [x + 2, y]]);
+      polygon(ctx, '#be956a', [[x - 5, y - 3], [x - 4, y - 4], [x + 4, y + 3], [x + 3, y + 4]]);
+      polygon(ctx, '#8d7156', [[x - 3, y + 7], [x, y + 1], [x + 1, y + 2], [x - 2, y + 8]]);
+    }
+    pixelText(ctx, 'E GEAR', x, y + 16, color, 1, true);
+  } else if (pickup.type === 'ember') {
+    glow(ctx, x, y, 19, '#e8885c', .6);
+    polygon(ctx, '#713e3d', [[x - 4, y + 5], [x - 6, y], [x - 3, y - 6], [x + 1, y - 10], [x + 1, y - 4], [x + 5, y], [x + 3, y + 5]]);
+    polygon(ctx, '#ef9d67', [[x - 2, y + 3], [x - 3, y - 1], [x, y - 6], [x + 3, y], [x + 1, y + 4]]);
+    rect(ctx, '#ffe2a1', x - 1, y - 2, 2, 4);
+  } else if (pickup.type === 'flask') {
+    glow(ctx, x, y, 22, '#83dabb', .6);
+    drawVial(ctx, [x, y, 0], '#80b9dd');
+    rect(ctx, '#e3f2d6', x - 2, y - 2, 4, 1);
+    rect(ctx, '#e3f2d6', x, y - 4, 1, 5);
   } else if (pickup.type === 'heal') {
     glow(ctx, x, y, 22, '#ee9c66', .6);
     rect(ctx, '#d3c8a0', x - 2, y - 10, 4, 4);
@@ -824,12 +993,68 @@ function drawExit(ctx, exit, camera, theme, time, finalFloor) {
   pixelText(ctx, exit.locked ? 'SEALED' : finalFloor ? 'E RETURN' : 'E ASCEND', center, y - 22, open ? '#b5e2be' : '#a99380', 1, true);
 }
 
+function pixelCircle(ctx, color, x, y, radius, thickness = 0) {
+  const outer = [];
+  const inner = [];
+  for (let i = 0; i <= 24; i++) {
+    const angle = i / 24 * TAU;
+    outer.push([x + Math.cos(angle) * radius, y + Math.sin(angle) * radius]);
+    if (thickness > 0) inner.unshift([x + Math.cos(angle) * Math.max(0, radius - thickness), y + Math.sin(angle) * Math.max(0, radius - thickness)]);
+  }
+  polygon(ctx, color, outer.concat(inner));
+}
+
+function drawBomb(ctx, projectile, x, y) {
+  const radius = clamp(projectile.blastRadius || 54, 1, 100);
+  if (projectile.phase === 'warning') {
+    const progress = clamp(1 - (projectile.fuse || 0) / .6, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = .12 + Math.ceil(progress * 3) / 12;
+    pixelCircle(ctx, '#ad5747', x, y, radius);
+    ctx.globalAlpha = 1;
+    pixelCircle(ctx, '#edaa72', x, y, radius, 2);
+    // The inner clock ring closes toward the grounded vial as its fuse expires.
+    pixelCircle(ctx, '#f9d296', x, y, Math.max(5, radius * (1 - progress)), 1);
+    for (let i = 0; i < 4; i++) {
+      const angle = i * Math.PI / 2;
+      rect(ctx, '#ffe3ab', x + Math.cos(angle) * radius - 2, y + Math.sin(angle) * radius - 2, 4, 4);
+    }
+    ctx.restore();
+    drawVial(ctx, [x, y, .3], '#b7db85');
+    rect(ctx, '#ffbf72', x + 2, y - 13, 2, 3);
+  } else if (projectile.phase === 'blast') {
+    const progress = clamp(1 - (projectile.life || 0) / .18, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = .3;
+    pixelCircle(ctx, '#f28e59', x, y, radius);
+    ctx.globalAlpha = 1;
+    pixelCircle(ctx, '#ffcc83', x, y, radius, 3);
+    pixelCircle(ctx, '#ffeab1', x, y, Math.max(5, radius * (.24 + progress * .56)), 3);
+    for (let i = 0; i < 8; i++) {
+      const angle = i / 8 * TAU;
+      const reach = radius * (.24 + progress * .68);
+      const sx = x + Math.cos(angle) * reach;
+      const sy = y + Math.sin(angle) * reach;
+      rect(ctx, i % 2 ? '#f9b365' : '#fff0ba', sx - 2, sy - 2, 4, 4);
+    }
+    rect(ctx, '#ffeec1', x - 5, y - 5, 10, 10);
+    ctx.restore();
+  } else {
+    // The flight pose uses the current physical velocity, never visual time.
+    const angle = Math.atan2(projectile.vy || 0, projectile.vx || 1) + Math.PI / 2;
+    drawVial(ctx, [x, y, angle], '#b7db85');
+  }
+}
+
 function drawProjectile(ctx, projectile, camera) {
-  const x = projectile.x - camera.x;
-  const y = projectile.y - camera.y;
-  if (x < -30 || x > WIDTH + 30 || y < -30 || y > HEIGHT + 30) return;
+  const x = projectile.x - camera.x + (projectile.type === 'bomb' ? (projectile.w || 0) / 2 : 0);
+  const y = projectile.y - camera.y + (projectile.type === 'bomb' ? (projectile.h || 0) / 2 : 0);
+  const margin = projectile.type === 'bomb' ? clamp(projectile.blastRadius || 54, 1, 100) + 3 : 30;
+  if (x < -margin || x > WIDTH + margin || y < -margin || y > HEIGHT + margin) return;
   const direction = (projectile.vx || 0) >= 0 ? 1 : -1;
-  if (projectile.type === 'orb' || projectile.type === 'wave') {
+  if (projectile.type === 'bomb') {
+    drawBomb(ctx, projectile, x, y);
+  } else if (projectile.type === 'orb' || projectile.type === 'wave') {
     glow(ctx, x, y, 19, '#eebd8b', .7);
     polygon(ctx, '#d57c67', [[x - 5, y], [x - 2, y - 5], [x + 3, y - 4], [x + 6, y], [x + 2, y + 5], [x - 3, y + 4]]);
     rect(ctx, '#ffe4ae', x - 2, y - 2, 4, 4);
@@ -839,6 +1064,55 @@ function drawProjectile(ctx, projectile, camera) {
     polygon(ctx, '#ecddbc', [[x + direction * 4, y], [x - direction * 2, y - 3], [x - direction, y + 3]]);
     rect(ctx, '#bc876c', direction > 0 ? x - 13 : x + 10, y - 2, 3, 5);
   }
+}
+
+function drawMerchant(ctx, merchant, camera, time, player) {
+  const x = Math.round(merchant.x - camera.x);
+  const y = Math.round(merchant.y - camera.y);
+  if (x < -65 || x > WIDTH + 65 || y < -90 || y > HEIGHT + 20) return;
+  // A rust awning, wooden counter, coal apron and tall cap are distinct from
+  // enemies. The trader stands at the world's feet anchor behind the stock.
+  rect(ctx, '#1a252a', x - 29, y - 64, 3, 64);
+  rect(ctx, '#6f5845', x - 28, y - 63, 1, 63);
+  rect(ctx, '#1a252a', x + 27, y - 64, 3, 64);
+  rect(ctx, '#8b7051', x + 28, y - 62, 1, 62);
+  polygon(ctx, '#412c32', [[x - 34, y - 61], [x - 28, y - 72], [x + 28, y - 72], [x + 34, y - 61]]);
+  rect(ctx, '#a76946', x - 32, y - 62, 64, 6);
+  for (let i = 0; i < 5; i++) {
+    rect(ctx, i % 2 ? '#d5a46b' : '#7d453a', x - 30 + i * 12, y - 61, 10, 7);
+    rect(ctx, '#422e31', x - 30 + i * 12, y - 55, 10, 1);
+  }
+  polygon(ctx, '#182b30', [[x - 10, y - 34], [x - 7, y - 41], [x + 5, y - 41], [x + 10, y - 30], [x + 7, y - 12], [x - 9, y - 12]]);
+  rect(ctx, '#607a70', x - 7, y - 36, 14, 22);
+  rect(ctx, '#c1a47d', x - 4, y - 36, 8, 19);
+  rect(ctx, '#524745', x - 4, y - 22, 9, 6);
+  rect(ctx, '#a99272', x - 10, y - 31, 4, 12);
+  rect(ctx, '#a99272', x + 7, y - 31, 4, 12);
+  polygon(ctx, '#293337', [[x - 7, y - 41], [x - 6, y - 50], [x + 5, y - 50], [x + 8, y - 42], [x + 5, y - 36], [x - 5, y - 36]]);
+  rect(ctx, '#c3a386', x - 3, y - 46, 10, 8);
+  rect(ctx, '#352f33', x + 1, y - 44, 7, 2);
+  rect(ctx, '#fae2ad', x + 2, y - 44, 2, 1);
+  polygon(ctx, '#8d6458', [[x - 7, y - 48], [x - 7, y - 58], [x - 2, y - 62], [x + 4, y - 60], [x + 5, y - 48]]);
+  rect(ctx, '#c39a73', x - 8, y - 49, 15, 3);
+  rect(ctx, '#362f2d', x - 31, y - 18, 62, 18);
+  rect(ctx, '#876144', x - 31, y - 20, 62, 4);
+  rect(ctx, '#c39967', x - 31, y - 20, 62, 1);
+  for (let i = 0; i < 5; i++) rect(ctx, '#574631', x - 26 + i * 12, y - 15, 9, 13);
+  rect(ctx, '#3f352f', x - 31, y - 3, 62, 3);
+  const stock = (merchant.stock || []).filter(item => !item.sold).slice(0, 3);
+  for (let i = 0; i < stock.length; i++) {
+    const sx = x - 19 + i * 19;
+    if (stock[i].kind === 'gear') {
+      polygon(ctx, '#adbc9d', [[sx - 3, y - 24], [sx + 4, y - 34], [sx + 6, y - 33], [sx - 1, y - 23]]);
+      rect(ctx, '#bb996b', sx - 5, y - 26, 7, 2);
+    } else drawVial(ctx, [sx, y - 23, 0], stock[i].kind === 'heal' ? '#ed9f78' : '#80b9dd');
+  }
+  const nearby = Math.abs(player.x + player.w / 2 - merchant.x) < 80 && Math.abs(player.y + player.h - merchant.y) < 70;
+  const signX = clamp(x, 31, WIDTH - 31);
+  const signY = clamp(y - 85, 12, HEIGHT - 20);
+  rect(ctx, '#213537', signX - 27, signY - 3, 54, 12);
+  rect(ctx, nearby ? '#deb17a' : '#947e63', signX - 26, signY - 2, 52, 1);
+  pixelText(ctx, nearby ? 'E TRADE' : 'TRADER', signX, signY, nearby ? '#ffe1a1' : '#bdc5a9', 1, true);
 }
 
 function drawForeground(ctx, camera, seed, ground, time, reducedMotion) {
@@ -967,6 +1241,7 @@ export function createRenderer(canvas) {
     drawRubble(ctx, view, theme, game.seed, ground);
     for (const platform of world.platforms || []) if (platform.x + platform.w > view.x - 40 && platform.x < view.x + WIDTH + 40 && platform.y + platform.h > view.y - 40 && platform.y < view.y + HEIGHT + 40) drawPlatform(ctx, platform, view, theme, game.seed);
     drawExit(ctx, world.exit, view, theme, time, game.floor >= 3);
+    for (const merchant of world.merchants || []) drawMerchant(ctx, merchant, view, time, player);
     for (const pickup of world.pickups || []) drawPickup(ctx, pickup, view, time, theme);
     // Soft shadows attach entities to platforms while leaving the collision edges visible.
     for (const entity of [player, ...(game.enemies || []).filter(enemy => !enemy.dead && enemy.hp > 0)]) {

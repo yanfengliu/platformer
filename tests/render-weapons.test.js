@@ -20,6 +20,8 @@ const WEAPONS = {
   archer: { color: '#b1986e', hand: '#c9b399', w: 20, h: 34, duration: .27, windup: .72 },
   brute: { color: '#596269', hand: '#b4a18a', handle: '#69553d', w: 30, h: 40, duration: .27, windup: .8 },
   boss: { color: '#8fada1', hand: '#a7aa8d', handle: '#8b7650', w: 48, h: 64, duration: .38, windup: .88 },
+  shield: { color: '#9ca3b6', hand: '#c9bfa6', handle: '#67533f', w: 26, h: 36, duration: .32, windup: .62 },
+  lancer: { color: '#d0b59a', hand: '#c6d1b3', handle: '#716c48', w: 22, h: 36, duration: .48, windup: .74 },
 };
 
 function fixture(type, facing = 1, extra = {}) {

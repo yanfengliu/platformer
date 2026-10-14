@@ -195,7 +195,7 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .run-stats { margin: 16px 0; padding: 12px 0; }
   .run-stats strong { font-size: 16px; }
 }
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .title-description { display: none; }
 }
 @media (max-width: 420px) {

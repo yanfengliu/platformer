@@ -302,21 +302,97 @@ function drawRubble(ctx, camera, theme, seed, ground) {
   }
 }
 
-function drawSlash(ctx, entity, time, enemy = false) {
-  const duration = entity.attackDuration || .3;
-  const progress = clamp(1 - (entity.attackTime || 0) / duration, 0, 1);
-  const facing = entity.facing || 1;
-  const radius = enemy && entity.type === 'boss' ? 68 : enemy && entity.type === 'brute' ? 47 : 31 + (entity.combo || 0) % 3 * 4;
-  const centerY = -entity.h * .55;
-  const a0 = -1.9 + progress * 2.5;
+function attackProgress(entity) {
+  return clamp(1 - (entity.attackTime || 0) / (entity.attackDuration || .3), 0, 1);
+}
+
+// Poses are [hand x, hand y, weapon angle] in the facing-right actor frame.
+// The clocks belong to the simulation, so impact freeze and reduced motion keep
+// the essential action intact. Rounding happens only when drawing the pixels.
+function poseBetween(a, b, amount) {
+  const t = clamp(amount, 0, 1);
+  const eased = t * t * (3 - 2 * t);
+  return a.map((value, i) => {
+    const delta = b[i] - value;
+    return value + (i === 2 ? Math.atan2(Math.sin(delta), Math.cos(delta)) : delta) * eased;
+  });
+}
+function poseAlong(progress, keys) {
+  for (let i = 1; i < keys.length; i++) {
+    if (progress <= keys[i][0]) return poseBetween(keys[i - 1][1], keys[i][1], (progress - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0]));
+  }
+  return keys.at(-1)[1];
+}
+function heroWeaponPose(player) {
+  const idle = [8, -18, 1.2];
+  if (!(player.attackTime > 0)) return idle;
+  const keys = player.combo === 2
+    ? [[0, idle], [.12, [7, -14, 1.2]], [.3, [14, -18, .35]], [.58, [12, -28, -1.4]], [.78, [8, -27, -2]], [1, idle]]
+    : player.combo === 3
+      ? [[0, idle], [.12, [1, -31, -2.1]], [.3, [12, -30, -.8]], [.58, [15, -13, 1.2]], [.78, [11, -15, 1.55]], [1, idle]]
+      : [[0, idle], [.12, [5, -28, -2.15]], [.3, [14, -23, -.8]], [.58, [13, -19, .65]], [.78, [11, -18, 1.45]], [1, idle]];
+  return poseAlong(attackProgress(player), keys);
+}
+function windupProgress(enemy) {
+  // Matches the authored simulation telegraph, including the Warden's fast phase.
+  const duration = { walker: .5, archer: .72, brute: .8, boss: .88 }[enemy.type] || .5;
+  const phaseSpeed = enemy.type === 'boss' && enemy.hp < enemy.maxHp / 2 ? .78 : 1;
+  return clamp(1 - (enemy.windup || 0) / (duration * phaseSpeed), 0, 1);
+}
+function enemyWeaponPose(enemy) {
+  const idle = { walker: [12, -17, -1.2], brute: [21, -23, -Math.PI / 2], boss: [29, -38, -Math.PI / 2], archer: [12, -21, 0] }[enemy.type];
+  const ready = enemy.type === 'boss' && enemy.attackKind === 'volley'
+    ? [25, -50, -.9]
+    : { walker: [4, -27, -2.45], brute: [5, -42, -2.5], boss: [10, -58, -2.4], archer: [18, -22, -.05] }[enemy.type];
+  if (enemy.state === 'windup') return poseBetween(idle, ready, windupProgress(enemy));
+  if (!(enemy.attackTime > 0)) return idle;
+  const progress = attackProgress(enemy);
+  if (enemy.type === 'archer') return poseAlong(progress, [[0, [18, -22, -.05]], [.3, [11, -20, .35]], [.58, [19, -20, 0]], [1, idle]]);
+  if (enemy.attackKind === 'volley') return poseAlong(progress, [[0, ready], [.2, [35, -43, -.55]], [.58, [31, -43, -.7]], [1, idle]]);
+  const contact = { walker: [11, -25, -1.2], brute: [17, -36, -1.2], boss: [29, -49, -1.05] }[enemy.type];
+  const follow = { walker: [15, -15, .75], brute: [23, -14, .8], boss: [34, -21, .7] }[enemy.type];
+  const returnPose = { walker: [10, -15, 1.15], brute: [19, -16, 1.1], boss: [27, -27, 1] }[enemy.type];
+  return poseAlong(progress, [[0, ready], [.22, contact], [.58, follow], [.82, returnPose], [1, idle]]);
+}
+function weaponPoint(pose, x, y, baseAngle = 0) {
+  const angle = pose[2] - baseAngle;
+  return [pose[0] + x * Math.cos(angle) - y * Math.sin(angle), pose[1] + x * Math.sin(angle) + y * Math.cos(angle)];
+}
+function weaponPolygon(ctx, color, pose, points, baseAngle = 0) {
+  polygon(ctx, color, points.map(([x, y]) => weaponPoint(pose, x, y, baseAngle)));
+}
+function weaponRect(ctx, color, pose, x, y, w, h, baseAngle = 0) {
+  weaponPolygon(ctx, color, pose, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], baseAngle);
+}
+function armSegment(ctx, color, start, end, width) {
+  const length = Math.hypot(end[0] - start[0], end[1] - start[1]) || 1;
+  const nx = -(end[1] - start[1]) / length * width / 2;
+  const ny = (end[0] - start[0]) / length * width / 2;
+  polygon(ctx, color, [[start[0] + nx, start[1] + ny], [end[0] + nx, end[1] + ny], [end[0] - nx, end[1] - ny], [start[0] - nx, start[1] - ny]]);
+}
+function drawWeaponArm(ctx, pose, shoulder, sleeve, skin, width) {
+  const hand = pose.slice(0, 2);
+  const elbow = [(shoulder[0] + hand[0]) / 2 - 2, (shoulder[1] + hand[1]) / 2 + 3];
+  for (const [start, end] of [[shoulder, elbow], [elbow, hand]]) {
+    armSegment(ctx, '#0a1c28', start, end, width + 2);
+    armSegment(ctx, sleeve, start, end, width);
+  }
+  rect(ctx, skin, hand[0] - width / 2, hand[1] - width / 2, width, width);
+}
+
+function drawSlash(ctx, entity, pose, enemy = false) {
+  const progress = attackProgress(entity);
+  const radius = enemy && entity.type === 'boss' ? 49 : enemy && entity.type === 'brute' ? 27 : 22;
+  const bladeAngle = pose[2] + (entity.type === 'boss' ? .34 : 0);
+  const direction = !enemy && entity.combo === 2 ? -1 : 1;
   const span = .65 + Math.sin(progress * Math.PI) * .65;
   if (progress < .08 || progress > .88) return;
   const outer = [];
   const inner = [];
   for (let i = 0; i <= 8; i++) {
-    const angle = a0 + span * i / 8;
-    outer.push([Math.cos(angle) * radius * facing, centerY + Math.sin(angle) * radius]);
-    inner.unshift([Math.cos(angle) * (radius - 6) * facing, centerY + Math.sin(angle) * (radius - 6)]);
+    const angle = bladeAngle - direction * span * (1 - i / 8);
+    outer.push([pose[0] + Math.cos(angle) * radius, pose[1] + Math.sin(angle) * radius]);
+    inner.unshift([pose[0] + Math.cos(angle) * (radius - 5), pose[1] + Math.sin(angle) * (radius - 5)]);
   }
   ctx.save();
   ctx.globalAlpha = .85 * Math.sin(progress * Math.PI);
@@ -327,9 +403,9 @@ function drawSlash(ctx, entity, time, enemy = false) {
   rect(ctx, enemy ? '#ff9d6a' : '#caffed', end[0] - 2, end[1] - 2, 4, 4);
   // Short radial marks communicate the direction without obscuring the target.
   for (let i = 0; i < 3; i++) {
-    const angle = a0 + span * .25 + i * .35;
+    const angle = bladeAngle - direction * (span * .75 - i * .25);
     const r = radius + 4 + i * 3;
-    rect(ctx, enemy ? '#d58269' : '#72c4b2', Math.cos(angle) * r * facing, centerY + Math.sin(angle) * r, 2, 2);
+    rect(ctx, enemy ? '#d58269' : '#72c4b2', pose[0] + Math.cos(angle) * r, pose[1] + Math.sin(angle) * r, 2, 2);
   }
 }
 
@@ -341,6 +417,7 @@ function drawHero(ctx, player, time, reducedMotion) {
   const step = running ? Math.sin(phase) : 0;
   const bodyBob = running ? -Math.abs(Math.sin(phase)) * 1.7 : Math.sin(time * 2.2) * .4;
   const attacking = (player.attackTime || 0) > 0;
+  const weaponPose = heroWeaponPose(player);
   const airborne = !player.grounded;
   const rolling = (player.rollTime || 0) > 0;
   const flash = (player.hurtTime || 0) > 0 && Math.floor(time * 28) % 2 === 0;
@@ -361,9 +438,9 @@ function drawHero(ctx, player, time, reducedMotion) {
     ctx.restore();
     return;
   }
-  if (attacking) drawSlash(ctx, player, time);
   ctx.scale(facing, 1);
-  ctx.translate(attacking ? 2 : 0, Math.round(bodyBob));
+  ctx.translate(attacking ? Math.round(Math.sin(attackProgress(player) * Math.PI) * 2) : 0, Math.round(bodyBob));
+  if (attacking) drawSlash(ctx, player, weaponPose);
   const legA = Math.round(airborne ? -3 : step * 4);
   const legB = Math.round(airborne ? 3 : -step * 4);
   // Boots and bent legs have separate dark outlines and light-facing planes.
@@ -384,18 +461,10 @@ function drawHero(ctx, player, time, reducedMotion) {
   rect(ctx, '#162b37', -7, -26, 4, 11);
   rect(ctx, '#62898a', -7, -25, 3, 4);
   rect(ctx, '#b8b8a0', -6, -17, 3, 3);
-  const armY = attacking ? -24 : -19;
-  rect(ctx, '#0a1c28', 5, armY - 2, attacking ? 10 : 4, 5);
-  rect(ctx, '#54747a', 5, armY - 1, attacking ? 7 : 3, 4);
-  rect(ctx, '#d5be95', attacking ? 12 : 6, armY, 3, 3);
-  if (attacking) {
-    polygon(ctx, '#ebf8dd', [[14, armY - 2], [31, armY - 12], [33, armY - 12], [32, armY - 8], [16, armY + 1]]);
-    rect(ctx, '#9cc6ba', 17, armY - 3, 8, 1);
-    rect(ctx, '#ce955e', 12, armY - 2, 2, 7);
-  } else {
-    polygon(ctx, '#6e9291', [[8, -17], [13, -6], [12, -3], [10, -5], [6, -16]]);
-    rect(ctx, '#d4be87', 6, -18, 5, 2);
-  }
+  drawWeaponArm(ctx, weaponPose, [5, -22], '#54747a', '#d5be95', 3);
+  weaponPolygon(ctx, attacking ? '#ebf8dd' : '#6e9291', weaponPose, [[0, -2], [17, -12], [19, -12], [18, -8], [2, 1]], -.55);
+  weaponRect(ctx, '#9cc6ba', weaponPose, 3, -3, 8, 1, -.55);
+  weaponRect(ctx, '#ce955e', weaponPose, -2, -2, 2, 7, -.55);
   // A hood, bronze birdlike mask and rust scarf form the original hero silhouette.
   polygon(ctx, '#0a1927', [[-8, -28], [-7, -36], [-2, -39], [5, -37], [8, -32], [6, -25], [-3, -25]]);
   polygon(ctx, '#274b5a', [[-6, -30], [-5, -35], [0, -37], [4, -35], [6, -31], [3, -27], [-3, -27]]);
@@ -416,6 +485,8 @@ function drawHero(ctx, player, time, reducedMotion) {
 }
 
 function drawWalker(ctx, enemy, time, flash) {
+  const weaponPose = enemyWeaponPose(enemy);
+  if (enemy.attackTime > 0) drawSlash(ctx, enemy, weaponPose, true);
   const walk = enemy.grounded && Math.abs(enemy.vx || 0) > 4 ? Math.round(Math.sin(time * 9 + (enemy.id | 0)) * 3) : 0;
   rect(ctx, '#101623', -8 + walk, -9, 6, 9);
   rect(ctx, '#444f4b', -7 + walk, -9, 3, 6);
@@ -432,11 +503,9 @@ function drawWalker(ctx, enemy, time, flash) {
   rect(ctx, '#101c24', -11, -24, 5, 15);
   rect(ctx, '#77906b', -10, -22, 3, 10);
   rect(ctx, '#bcc7a0', -10, -13, 3, 5);
-  const armY = enemy.state === 'windup' ? -26 : -19;
-  rect(ctx, '#8a9c76', 6, armY, 7, 4);
-  rect(ctx, '#cbd2a5', 11, armY, 3, 4);
-  polygon(ctx, '#a79a77', [[13, armY - 2], [16, armY - 14], [20, armY - 19], [23, armY - 16], [19, armY - 9], [16, armY + 2]]);
-  rect(ctx, '#dbca98', 17, armY - 11, 2, 6);
+  drawWeaponArm(ctx, weaponPose, [6, -22], '#8a9c76', '#cbd2a5', 4);
+  weaponPolygon(ctx, '#a79a77', weaponPose, [[1, -4], [4, -16], [8, -21], [11, -18], [7, -11], [4, 0]], -1.2);
+  weaponRect(ctx, '#dbca98', weaponPose, 5, -13, 2, 6, -1.2);
   rect(ctx, '#111e27', -5, -31, 13, 10);
   rect(ctx, flash ? '#e9ffd9' : '#a3b88a', -3, -30, 10, 8);
   rect(ctx, '#526956', -4, -29, 3, 4);
@@ -470,19 +539,34 @@ function drawArcher(ctx, enemy, time, flash) {
   rect(ctx, '#232132', 2, -30, 6, 2);
   rect(ctx, '#f2be84', 3, -30, 4, 1);
   rect(ctx, '#ccc4a6', 5, -27, 3, 1);
-  const drawn = enemy.state === 'windup' || enemy.state === 'attack';
-  const bowX = drawn ? 18 : 13;
-  rect(ctx, '#88727d', 5, -23, drawn ? 12 : 7, 4);
-  rect(ctx, '#c9b399', bowX - 3, -23, 3, 4);
-  polygon(ctx, '#b1986e', [[bowX, -34], [bowX + 5, -29], [bowX + 7, -22], [bowX + 5, -15], [bowX, -10], [bowX + 2, -16], [bowX + 4, -22], [bowX + 2, -28]]);
-  rect(ctx, '#918c7b', bowX, -33, 1, 22);
-  if (drawn) {
-    rect(ctx, '#e2d8aa', bowX - 8, -22, 19, 1);
-    polygon(ctx, '#e4eac8', [[bowX + 10, -24], [bowX + 14, -22], [bowX + 10, -20]]);
+  const weaponPose = enemyWeaponPose(enemy);
+  const nocked = enemy.state === 'windup';
+  const pull = nocked ? windupProgress(enemy) : 0;
+  const nockX = 1 - pull * 9;
+  const stringCenter = weaponPoint(weaponPose, nockX, -1);
+  const drawHand = nocked ? stringCenter : poseBetween([8, -23], [-7, -15], attackProgress(enemy));
+  if (nocked || enemy.attackTime > 0) {
+    armSegment(ctx, '#88727d', [-4, -23], drawHand, 3);
+    rect(ctx, '#c5b292', drawHand[0] - 2, drawHand[1] - 1, 3, 3);
+  }
+  drawWeaponArm(ctx, weaponPose, [5, -23], '#88727d', '#c9b399', 3);
+  // Limb flex and the V-shaped string show the draw; the simulation fires on
+  // entry to attack, so only windup owns a nocked arrow.
+  const flex = pull * 2;
+  weaponPolygon(ctx, '#b1986e', weaponPose, [[1 - flex, -13], [6, -8], [8, -1], [6, 6], [1 - flex, 11], [3 - flex, 5], [5, -1], [3 - flex, -7]]);
+  const top = weaponPoint(weaponPose, 1 - flex, -12);
+  const bottom = weaponPoint(weaponPose, 1 - flex, 10);
+  armSegment(ctx, '#918c7b', top, stringCenter, 1);
+  armSegment(ctx, '#918c7b', stringCenter, bottom, 1);
+  if (nocked) {
+    weaponRect(ctx, '#e2d8aa', weaponPose, nockX, -1, 20, 1);
+    weaponPolygon(ctx, '#e4eac8', weaponPose, [[nockX + 19, -3], [nockX + 23, -1], [nockX + 19, 1]]);
   }
 }
 
 function drawBrute(ctx, enemy, time, flash) {
+  const weaponPose = enemyWeaponPose(enemy);
+  if (enemy.attackTime > 0) drawSlash(ctx, enemy, weaponPose, true);
   const step = Math.abs(enemy.vx || 0) > 4 ? Math.round(Math.sin(time * 6 + (enemy.id | 0)) * 3) : 0;
   rect(ctx, '#151b27', -12 + step, -12, 10, 12);
   rect(ctx, '#566167', -11 + step, -11, 7, 9);
@@ -501,14 +585,11 @@ function drawBrute(ctx, enemy, time, flash) {
   rect(ctx, '#a29b82', -16, -35, 7, 3);
   rect(ctx, '#4d5a63', -17, -26, 7, 12);
   rect(ctx, '#948674', -16, -16, 7, 5);
-  const raised = enemy.state === 'windup';
-  const armY = raised ? -39 : -26;
-  rect(ctx, '#4e5a62', 10, armY, 10, 6);
-  rect(ctx, '#b4a18a', 17, armY + 1, 5, 5);
-  rect(ctx, '#69553d', 20, armY - 19, 3, 39);
-  polygon(ctx, '#596269', [[17, armY - 20], [28, armY - 24], [34, armY - 20], [34, armY - 10], [28, armY - 6], [17, armY - 11]]);
-  rect(ctx, '#b0a892', 19, armY - 19, 10, 3);
-  rect(ctx, '#85908a', 29, armY - 18, 3, 8);
+  drawWeaponArm(ctx, weaponPose, [12, -30], '#4e5a62', '#b4a18a', 5);
+  weaponRect(ctx, '#69553d', weaponPose, -1, -22, 3, 39, -Math.PI / 2);
+  weaponPolygon(ctx, '#596269', weaponPose, [[-4, -23], [7, -27], [13, -23], [13, -13], [7, -9], [-4, -14]], -Math.PI / 2);
+  weaponRect(ctx, '#b0a892', weaponPose, -2, -22, 10, 3, -Math.PI / 2);
+  weaponRect(ctx, '#85908a', weaponPose, 8, -21, 3, 8, -Math.PI / 2);
   polygon(ctx, '#17252c', [[-8, -39], [-6, -46], [5, -46], [10, -39], [7, -32], [-6, -32]]);
   rect(ctx, '#777e73', -5, -43, 12, 9);
   rect(ctx, '#b0ae8d', -4, -43, 11, 2);
@@ -518,6 +599,7 @@ function drawBrute(ctx, enemy, time, flash) {
 }
 
 function drawBoss(ctx, enemy, time, flash) {
+  const weaponPose = enemyWeaponPose(enemy);
   const breathing = Math.round(Math.sin(time * 2.4));
   const step = Math.abs(enemy.vx || 0) > 4 ? Math.round(Math.sin(time * 5) * 4) : 0;
   polygon(ctx, '#111923', [[-19, -42], [-24, -3], [-15, -7], [-10, -2], [-6, -8], [6, -7], [13, -2], [23, -5], [17, -44]]);
@@ -529,6 +611,7 @@ function drawBoss(ctx, enemy, time, flash) {
   rect(ctx, '#bcc0a0', 4 - step, -4, 17, 4);
   ctx.save();
   ctx.translate(0, breathing);
+  if (enemy.attackTime > 0 && enemy.attackKind !== 'volley') drawSlash(ctx, enemy, weaponPose, true);
   polygon(ctx, '#182733', [[-23, -48], [-16, -54], [15, -54], [24, -45], [17, -18], [-17, -18]]);
   polygon(ctx, flash ? '#e6fff0' : '#526d6a', [[-16, -48], [13, -49], [19, -43], [13, -20], [-14, -21]]);
   rect(ctx, '#829b85', -13, -47, 6, 20);
@@ -542,13 +625,11 @@ function drawBoss(ctx, enemy, time, flash) {
   rect(ctx, '#8e9b87', -25, -50, 13, 3);
   rect(ctx, '#4d6b6c', -25, -41, 11, 17);
   rect(ctx, '#b6b79b', -24, -28, 9, 7);
-  const armY = enemy.state === 'windup' ? -60 : -42;
-  polygon(ctx, '#3d565e', [[13, armY - 5], [24, armY - 5], [30, armY + 3], [25, armY + 10], [15, armY + 7]]);
-  rect(ctx, '#a7aa8d', 24, armY + 1, 8, 7);
-  rect(ctx, '#8b7650', 30, armY - 21, 4, 56);
-  polygon(ctx, '#8fada1', [[28, armY - 23], [34, armY - 35], [45, armY - 42], [52, armY - 34], [46, armY - 19], [35, armY - 10], [28, armY - 13]]);
-  polygon(ctx, '#c9d4b9', [[33, armY - 27], [44, armY - 37], [50, armY - 34], [43, armY - 22], [34, armY - 16]]);
-  rect(ctx, '#5a7f78', 33, armY - 20, 5, 6);
+  drawWeaponArm(ctx, weaponPose, [18, -46], '#3d565e', '#a7aa8d', 8);
+  weaponRect(ctx, '#8b7650', weaponPose, 1, -25, 4, 56, -Math.PI / 2);
+  weaponPolygon(ctx, '#8fada1', weaponPose, [[-1, -27], [5, -39], [16, -46], [23, -38], [17, -23], [6, -14], [-1, -17]], -Math.PI / 2);
+  weaponPolygon(ctx, '#c9d4b9', weaponPose, [[4, -31], [15, -41], [21, -38], [14, -26], [5, -20]], -Math.PI / 2);
+  weaponRect(ctx, '#5a7f78', weaponPose, 4, -24, 5, 6, -Math.PI / 2);
   polygon(ctx, '#111f2a', [[-11, -57], [-13, -65], [-7, -72], [8, -72], [14, -64], [11, -53], [-7, -53]]);
   polygon(ctx, flash ? '#edffde' : '#92a88e', [[-7, -65], [7, -66], [11, -60], [7, -54], [-6, -55]]);
   rect(ctx, '#243b40', -5, -62, 15, 3);
@@ -573,7 +654,7 @@ function drawTelegraph(ctx, enemy, camera, time, reducedMotion) {
   polygon(ctx, '#f8ba7b', [[x, y - 7], [x + 6, y - 1], [x, y + 5], [x - 6, y - 1]]);
   rect(ctx, '#6c302d', x - 1, y - 4, 2, 4);
   rect(ctx, '#6c302d', x - 1, y + 1, 2, 1);
-  if (enemy.type === 'boss' || enemy.type === 'brute') {
+  if ((enemy.type === 'boss' && enemy.attackKind !== 'volley') || enemy.type === 'brute') {
     const attackX = x + (enemy.facing || 1) * (enemy.type === 'boss' ? 36 : 25);
     ctx.save();
     ctx.globalAlpha = .25 + pulse * .2;
@@ -591,7 +672,6 @@ function drawEnemy(ctx, enemy, camera, time, reducedMotion) {
   const flash = (enemy.hurtTime || 0) > 0;
   ctx.save();
   ctx.translate(x, y);
-  if ((enemy.attackTime || 0) > 0 && enemy.type !== 'archer') drawSlash(ctx, enemy, time, true);
   ctx.scale(enemy.facing || 1, 1);
   if (enemy.type === 'archer') drawArcher(ctx, enemy, time, flash);
   else if (enemy.type === 'brute') drawBrute(ctx, enemy, time, flash);

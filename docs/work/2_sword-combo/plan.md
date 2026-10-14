@@ -1,6 +1,6 @@
 # Readable sword combo feedback
 
-Status: active
+Status: complete
 Owner: Codex coordinator
 Created: 2026-10-13
 Updated: 2026-10-13
@@ -23,16 +23,16 @@ Implementation owner `/root/combo_fix` works from d65af01123c3e50462366ab5a059e1
 - [x] Expiration, roll, damage and external input cancellation reset sequence/queued input without a phantom strike; mute/pause and reduced motion remain correct.
 - [x] Existing weapon geometry, timing/damage and kill-chain semantics remain correct; meaningful tests fail with the defect and pass after repair.
 - [x] Check, tests and build pass; headless real controls/rendering inspected at 1280×800, 720×560 and 320×640, including both narrow title actions.
-- [ ] Exact integrated revision independently reviewed, findings resolved, main merged/pushed, remote CI green and owned resources cleaned.
+- [x] Exact integrated revision independently reviewed, findings resolved, main merged/pushed, remote CI green and owned resources cleaned.
 
 ## Implementation steps
 
 - [x] Inspect instructions, main and prior defects; allocate record and isolated worker/acceptance trees; dispatch implementation.
 - [x] Reproduce baseline through real controls and the read-only snapshot.
 - [x] Integrate worker changes and run final automated, visual and control gates.
-- [ ] Retain independent review, defect and devlog records; merge/push and follow CI.
-- [ ] Clean output, browsers, server and worktrees; close the goal.
+- [x] Retain independent review, defect and devlog records; merge/push and follow CI.
+- [x] Clean output, browsers, server and worktrees; close the goal.
 
 ## Outcome
 
-Product d95feb2f4a9c3926551d7221d4f7878fd77a3055 is verified and independently reviewed with no material findings. Check, 55 tests, build and diff check pass. Twelve new tests fail on the old modules and pass on the repair. Real controls, native stage inspection, finisher impacts, mute/pause/reduced motion and all three viewport/title gates pass; review round 0 retains bounds and digest provenance. Hidden/headless browser, daemon, server and their recorded children were verified gone. Main push, remote CI and worktree/output closure remain. First automated fixtures and first impact target setup were invalid measurements and were corrected before acceptance, without product changes or weakening gates. Model calls/compute were not separately measured.
+Product d95feb2f4a9c3926551d7221d4f7878fd77a3055 is verified and independently reviewed with no material findings. Check, 55 tests, build and diff check pass. Twelve new tests fail on the old modules and pass on the repair. Real controls, native stage inspection, finisher impacts, mute/pause/reduced motion and all three viewport/title gates pass; review round 0 retains bounds and digest provenance. Delivery 58028b9c96274f7f71accb695ae6ea6389a40552 is merged/pushed on main; [CI run 38508591156](https://github.com/yanfengliu/platformer/actions/runs/38508591156) completed successfully. Hidden/headless browser, daemon, server and their recorded children were verified gone; all three clean task worktrees, merged task branches, compiled output and raw evidence were removed. Only primary main remains. First automated fixtures, first impact target setup and initial review document headings were invalid measurements/records and were corrected before final acceptance, without product changes or weakening gates. This closure changes documentation only; runtime/remote gates are not repeated for it. Model calls/compute were not separately measured.

@@ -56,7 +56,7 @@ function createEnemies(world, floor) {
       w: spec.w, h: spec.h, vx: 0, vy: 0, facing: -1,
       hp, maxHp: hp, grounded: true, invulnerable: 0, hurtTime: 0,
       attackTime: 0, attackDuration: 0.3, rollTime: 0, dead: false,
-      state: 'patrol', windup: 0, cooldown: 0.4,
+      state: 'patrol', windup: 0, windupDuration: 0, cooldown: 0.4,
       homeX: spawn.x, patrolDirection: 1, attackCount: 0,
       attackHit: false, attackKind: 'melee', announced: false,
     };
@@ -340,7 +340,8 @@ function updateEnemy(game, enemy, dt) {
     const bossVolley = enemy.type === 'boss' && enemy.attackCount % 3 === 2;
     if (inRange || (bossVolley && Math.abs(dx) < 450)) {
       enemy.state = 'windup';
-      enemy.windup = spec.windup * (enemy.type === 'boss' && enemy.hp < enemy.maxHp / 2 ? 0.78 : 1);
+      enemy.windupDuration = spec.windup * (enemy.type === 'boss' && enemy.hp < enemy.maxHp / 2 ? 0.78 : 1);
+      enemy.windup = enemy.windupDuration;
       enemy.attackKind = bossVolley ? 'volley' : 'melee';
       enemy.vx = 0;
     } else enemy.vx = Math.sign(dx) * spec.speed;

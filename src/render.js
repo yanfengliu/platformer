@@ -334,10 +334,12 @@ function heroWeaponPose(player) {
   return poseAlong(attackProgress(player), keys);
 }
 function windupProgress(enemy) {
-  // Matches the authored simulation telegraph, including the Warden's fast phase.
-  const duration = { walker: .5, archer: .72, brute: .8, boss: .88 }[enemy.type] || .5;
+  // The Warden preserves a windup across damage, even if health crosses its fast
+  // phase threshold. Use the duration the simulation chose for this attack.
+  const fallback = { walker: .5, archer: .72, brute: .8, boss: .88 }[enemy.type] || .5;
   const phaseSpeed = enemy.type === 'boss' && enemy.hp < enemy.maxHp / 2 ? .78 : 1;
-  return clamp(1 - (enemy.windup || 0) / (duration * phaseSpeed), 0, 1);
+  const duration = enemy.windupDuration > 0 ? enemy.windupDuration : fallback * phaseSpeed;
+  return clamp(1 - (enemy.windup || 0) / duration, 0, 1);
 }
 function enemyWeaponPose(enemy) {
   const idle = { walker: [12, -17, -1.2], brute: [21, -23, -Math.PI / 2], boss: [29, -38, -Math.PI / 2], archer: [12, -21, 0] }[enemy.type];

@@ -1,5 +1,7 @@
 # Devlog Summary
 
+- 2026-10-14: **A harder roguelike with builds and lasting talents** — seven tactical enemy roles, elite encounters, 13 gear items, rarity drops, finite merchants and nine prerequisite talents. The old held-attack policy now spends healing; four tactical seeds and two actual-control runs win. All 98 checks pass, local progression survives retry/reload, and compact menus show their cards. Independent review and delivery evidence live in work 4.
+
 - 2026-10-13: **Emberwake gains a stronger pixel-art presentation** — original bitmap typography, stepped UI, integer raster shapes, dithered lighting, and richer stone/moss. All59tests and real controls/native actor/theme/menu checks pass with a60fps sample. Review caught and resolved title clipping across compact boundaries; strict inner-box checks now cover both sides.
 
 - 2026-10-13: **Sword combos communicate all three strikes** — numbered steps, teal strokes and an amber finisher now work even on misses, with distinct sounds and finisher sparks. Early released taps queue one follow-up through recovery; interruption clears it. Twelve checks fail on the old modules and pass after repair, all 55 tests pass, and real-key headless controls/native renders pass independent acceptance.

@@ -4,6 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, updateGame, chooseUpgrade, drainEvents, PHYSICS, UPGRADES } from '../src/game.js';
 import { createWorld, GROUND_Y } from '../src/world.js';
+import * as core from '../src/game.js';
+import { playRun } from './helpers/run-policy.js';
 
 const STEP = 1 / 120;
 function advance(game, seconds, input = {}) {
@@ -315,34 +317,13 @@ test('locked exits require enemies, floors preserve upgrades and resource limits
 });
 
 test('the generated three-floor run completes by movement, attacks, healing and interaction', () => {
-  const game = createGame(0);
-  let choices = 0;
-  const trace = [];
-  for (let frame = 0; frame < 120 * 300 && game.mode !== 'won' && game.mode !== 'dead'; frame += 1) {
-    if (game.mode === 'choice') {
-      const chosen = game.offer.find((offer) => offer.id === 'edge') ?? game.offer.find((offer) => offer.id === 'leech') ?? game.offer[0];
-      chooseUpgrade(game, chosen.id);
-      choices += 1;
-    }
-    const player = game.player;
-    const relic = game.world.pickups.find((pickup) => pickup.type === 'relic' && !pickup.collected);
-    const enemy = game.enemies.filter((candidate) => !candidate.dead).sort((a, b) => Math.abs(center(a) - center(player)) - Math.abs(center(b) - center(player)))[0];
-    const target = relic && (!enemy || relic.x < enemy.x) ? relic : enemy ?? game.world.exit;
-    const dx = (target.w ? center(target) : target.x) - center(player);
-    const fighting = Boolean(enemy && target === enemy && Math.abs(dx) < 70);
-    const input = { left: dx < -34, right: dx > 34, attackHeld: fighting, attackPressed: fighting && frame % 45 === 0, healPressed: player.hp < player.maxHp * 0.5 && player.flasks > 0, interactPressed: Math.abs(dx) < 48 && target !== enemy };
-    updateGame(game, input, STEP);
-    if (frame % 120 === 0) trace.push({ t: frame / 120, floor: game.floor, hp: player.hp, x: Math.round(player.x), target: enemy?.type, remaining: game.enemies.filter((candidate) => !candidate.dead).length });
-    drainEvents(game);
-    assert.ok(Number.isFinite(player.x) && Number.isFinite(player.y));
-    assert.ok(player.hp >= 0 && player.hp <= player.maxHp);
-    assert.ok(player.flasks >= 0 && player.flasks <= player.maxFlasks);
-  }
+  const { game, choices, trace } = playRun(core, 0, true);
+  assert.ok(Number.isFinite(game.player.x) && Number.isFinite(game.player.y));
+  assert.ok(game.player.hp >= 0 && game.player.hp <= game.player.maxHp);
+  assert.ok(game.player.flasks >= 0 && game.player.flasks <= game.player.maxFlasks);
   assert.equal(game.mode, 'won', JSON.stringify(trace.slice(-12)));
   assert.equal(game.floor, 3);
   assert.equal(choices, 3);
-  assert.equal(game.kills, 20);
+  assert.equal(game.kills, 29);
   assert.ok(game.time < 300);
 });
-
-function center(entity) { return entity.x + entity.w / 2; }

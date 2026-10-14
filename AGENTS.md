@@ -2,7 +2,7 @@
 
 ## What this is
 
-Emberwake is an original browser roguelike platformer with authored pixel art, precise movement, readable combat, and a complete three-floor run. It uses Node 24 and dependency-free ES modules, Canvas, and WebAudio. No commercial game assets, persistent progression, multiplayer, or external runtime services.
+Emberwake is an original browser roguelike platformer with authored pixel art, precise movement, readable combat, local meta talents, and a complete three-floor run. It uses Node 24 and dependency-free ES modules, Canvas, and WebAudio. No commercial game assets, live-run saves, multiplayer, or external runtime services.
 
 Local execution rules: [docs/policies/local-rules.md](docs/policies/local-rules.md).
 
@@ -19,6 +19,7 @@ This repository inherits the generated [parent fleet canon](../AGENTS.md), whose
 - `npm run build` for the complete static artifact.
 - `npm run dev` serves localhost:4173; `-- --dist` serves the built output. Stop task-owned servers during cleanup.
 - Gameplay or visual changes need headless browser checks using real keyboard/mouse input and inspected rendered states at 1280×800, 720×560, and 320×640. Check both title actions fit the frame's inner clipping box (excluding borders) and are clickable at 320px and across compact breakpoints at 420px, 421px, 480px, 481px, 560px and 561px (640px height). Simulation tests and state mutation do not replace this gate.
+- In talent, equipment, shop and loot panels, inspect the first named card in the initial clipped view and exercise keyboard scrolling to visible actions at those three viewports. Preserve storage warnings and purchase feedback. Header copy alone does not accept a compact menu.
 
 ## Invariants & boundaries
 

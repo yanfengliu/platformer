@@ -18,7 +18,7 @@ This repository inherits the generated [parent fleet canon](../AGENTS.md), whose
 - `npm test` for simulation/world invariants and input buffering.
 - `npm run build` for the complete static artifact.
 - `npm run dev` serves localhost:4173; `-- --dist` serves the built output. Stop task-owned servers during cleanup.
-- Gameplay or visual changes need headless browser checks using real keyboard/mouse input and inspected rendered states at 1280×800, 720×560, and 320×640. Check both title actions are inside the clipped frame and clickable at 320px. Simulation tests and state mutation do not replace this gate.
+- Gameplay or visual changes need headless browser checks using real keyboard/mouse input and inspected rendered states at 1280×800, 720×560, and 320×640. Check both title actions are inside the clipped frame and clickable at 320px and across the compact breakpoint at 420px, 421px and 480px (640px height). Simulation tests and state mutation do not replace this gate.
 
 ## Invariants & boundaries
 

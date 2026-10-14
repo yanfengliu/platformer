@@ -19,20 +19,20 @@ Base f9039a61268acda2cbcba47c2d6a22f630376c5b. `/root/pixel_ui` owns CSS, semant
 
 ## Acceptance criteria
 
-- [ ] Title, controls, HUD and menus use coherent pixel-style typography/icons/borders, remain readable and keyboard accessible, and both narrow title actions are visible/clickable.
-- [ ] Actual world/sprites/effects have crisp pixel edges and discrete lighting/detail; native rendering of each affected actor/theme is individually inspected.
-- [ ] Real-key movement, sword tap/hold1→2→3, roll, combat, pause/help/mute and responsive layouts remain correct at 1280×800,720×560,320×640.
-- [ ] Existing meaningful weapon/input/game regressions remain green; new raster/asset checks cover concrete style constraints with a valid baseline discriminator. Performance remains playable within measured headless bounds.
+- [x] Title, controls, HUD and menus use coherent pixel-style typography/icons/borders, remain readable and keyboard accessible, and both narrow title actions are visible/clickable.
+- [x] Actual world/sprites/effects have crisp pixel edges and discrete lighting/detail; native rendering of each affected actor/theme is individually inspected.
+- [x] Real-key movement, sword tap/hold1→2→3, roll, combat, pause/help/mute and responsive layouts remain correct at 1280×800,720×560,320×640.
+- [x] Existing meaningful weapon/input/game regressions remain green; new raster/asset checks cover concrete style constraints with a valid baseline discriminator. Performance remains playable within measured headless bounds.
 - [ ] Check/tests/build, integrated independent review, main merge/push, remote CI and task-resource cleanup complete.
 
 ## Implementation steps
 
 - [x] Read rules, prior defects and clean main/worktree state; allocate unit and dispatch separate UI/world owners.
-- [ ] Capture baseline; settle contracts and integrate checked worker commits.
-- [ ] Run final gates, real headless controls, native visual/viewport and performance checks; retain independent report.
+- [x] Capture baseline; settle contracts and integrate checked worker commits.
+- [x] Run final gates, real headless controls, native visual/viewport and performance checks; retain independent report.
 - [ ] Update lasting defect/design/devlog records; merge/push and follow CI.
 - [ ] Clean task output, processes, worktrees and branches; close goal.
 
 ## Outcome
 
-Pending. Production flow probes use real input and read-only debug snapshots; supplemental renderer fixtures are labelled separately. Headless browser and hidden server use identified sessions/processes and finally cleanup. Static raster quality is assessed visually, not inferred from a filename or worker summary.
+Final product b1e320e7af9ad9a14638af9eed64d02d477762a7 passes check,59tests, build, actual controls, native actors/themes and menus, desktop frame timing and strict12width title acceptance. Independent rounds0/1/2 close F0 with no material finding left. Raster/font source remains unchanged across the two title-only repairs. Earlier invalid baseline return-context/initial outer-box measurements were corrected and their claims bounded; four substantive repairs were used (two raster refinements, two title fixes). Review2 retains asset/render digests and limits. Every browser/daemon/server/child tree closed and verified gone. Main push, remote CI and worktree/raw-output cleanup remain; model calls/compute were not separately measured.

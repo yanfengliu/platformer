@@ -1,5 +1,7 @@
 # Devlog Summary
 
+- 2026-10-13: **Emberwake gains a stronger pixel-art presentation** — original bitmap typography, stepped UI, integer raster shapes, dithered lighting, and richer stone/moss. All59tests and real controls/native actor/theme/menu checks pass with a60fps sample. Review caught and resolved title clipping across compact boundaries; strict inner-box checks now cover both sides.
+
 - 2026-10-13: **Sword combos communicate all three strikes** — numbered steps, teal strokes and an amber finisher now work even on misses, with distinct sounds and finisher sparks. Early released taps queue one follow-up through recovery; interruption clears it. Twelve checks fail on the old modules and pass after repair, all 55 tests pass, and real-key headless controls/native renders pass independent acceptance.
 
 - 2026-10-13: **Warden windups keep their chosen health phase after damage** — review caught a half-health hit rewinding the axe pose. Chosen-duration metadata fixes both melee and volley without changing combat timing; two new actual-damage regressions pass and the complete suite passes 43.

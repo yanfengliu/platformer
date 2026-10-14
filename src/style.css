@@ -123,6 +123,8 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
 .currency-line { color: var(--amber); font-size: 16px; line-height: 24px; margin: 12px 0; }
 .storage-notice, .talent-feedback { color: var(--muted); font-size: 8px; line-height: 16px; margin: 12px 0; }
 .panel-back { margin: 12px auto; font-size: 8px; line-height: 16px; padding: 6px 12px; }
+.back-short { display: none; }
+.compact-scroll-hint { display: none; }
 .talent-branches, .equipment-slots, .shop-stock { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; margin-top: 16px; }
 .talent-branch { min-width: 0; }
 .branch-heading { color: var(--amber); font-size: 16px; line-height: 24px; font-weight: normal; margin: 0 0 12px; }
@@ -297,6 +299,40 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .below-stage { padding: 16px 0; }
   .control-legend { gap: 8px 12px; }
   .control-legend kbd { padding: 2px 4px; min-width: 18px; }
+}
+@media (max-width: 900px) {
+  .overlay-talents, .overlay-inventory, .overlay-shop, .overlay-loot { padding: 12px; }
+  .talents-panel, .inventory-panel, .shop-panel, .loot-panel { padding: 12px; }
+  :is(.talents-panel, .inventory-panel, .shop-panel, .loot-panel) .eyebrow,
+  :is(.talents-panel, .inventory-panel, .shop-panel, .loot-panel) .menu-copy,
+  .talent-feedback-default, .storage-notice-normal { display: none; }
+  :is(.talents-panel, .inventory-panel, .shop-panel, .loot-panel) .menu-heading { font-size: 16px; line-height: 20px; }
+  .panel-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0; }
+  .panel-toolbar .currency-line { margin: 0; font-size: 8px; line-height: 12px; text-align: left; }
+  .panel-toolbar .panel-back { flex-shrink: 0; margin: 0; padding: 4px; font-size: 8px; line-height: 12px; }
+  .panel-toolbar .back-full { display: none; }
+  .panel-toolbar .back-short { display: inline; }
+  .compact-scroll-hint { display: block; margin: 4px 0; color: var(--amber); font-size: 8px; line-height: 12px; }
+  .talents-panel .storage-notice, .talents-panel .talent-feedback { margin: 4px 0; line-height: 12px; }
+  .talent-branches, .equipment-slots, .shop-stock { margin-top: 8px; gap: 8px; }
+  .talents-panel .branch-heading { font-size: 8px; line-height: 12px; margin-bottom: 4px; }
+  .talent-card, .equipment-card, .stock-card { padding: 6px; }
+  .talent-card + .talent-card { margin-top: 8px; }
+  .item-label { line-height: 12px; margin-bottom: 4px; }
+  .item-name { line-height: 20px; margin-bottom: 4px; }
+  .item-description { line-height: 12px; margin: 4px 0; }
+  .talent-buy, .stock-buy { padding: 4px; line-height: 12px; }
+  .talent-status { min-height: 0; }
+  .price-label { line-height: 12px; margin: 4px 0; }
+  .equipment-comparison { margin-top: 4px; padding-top: 4px; }
+  .comparison-stats { gap: 4px; line-height: 12px; margin: 4px 0; }
+  .loot-actions { margin-top: 8px; }
+  .loot-actions .primary-button, .loot-actions .secondary-button { font-size: 8px; line-height: 12px; padding: 4px; }
+  .loot-actions .secondary-button { margin-top: 8px; }
+}
+@media (max-width: 560px) {
+  .overlay-talents, .overlay-inventory, .overlay-shop, .overlay-loot { padding: 8px; }
+  .talents-panel, .inventory-panel, .shop-panel, .loot-panel { padding: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }

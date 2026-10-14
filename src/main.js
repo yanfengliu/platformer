@@ -206,13 +206,22 @@ function equipmentComparison(item) {
   return comparison;
 }
 
+function panelToolbar(currency, action, backLabel = 'Back', shortLabel = 'Back') {
+  const toolbar = element('div', 'panel-toolbar');
+  const back = button('', action, 'secondary-button panel-back');
+  back.setAttribute('aria-label', backLabel);
+  back.append(element('span', 'back-full', backLabel), element('span', 'back-short', shortLabel));
+  toolbar.append(element('p', 'currency-line', currency), back);
+  return toolbar;
+}
+
 function talentsPanel() {
   const profile = profileStore.snapshot();
   const content = panel('FIRE THAT ENDURES', 'Ember talents', 'Earn embers by defeating enemies and completing floors. Every learned rank strengthens your next life.', 'talents-panel');
-  content.append(element('p', 'currency-line', `${profile.embers} BANKED EMBERS`));
-  content.append(element('p', 'storage-notice', profileStore.status().message));
-  content.append(button('Back', toggleTalents, 'secondary-button panel-back'));
-  const feedback = element('p', 'talent-feedback', talentFeedback || 'Learn one rank in a talent to unlock the next talent in its branch.');
+  content.append(panelToolbar(`${profile.embers} BANKED EMBERS`, toggleTalents));
+  const normalStorage = ['new', 'loaded'].includes(profileStore.status().kind);
+  content.append(element('p', `storage-notice${normalStorage ? ' storage-notice-normal' : ''}`, profileStore.status().message));
+  const feedback = element('p', `talent-feedback${talentFeedback ? '' : ' talent-feedback-default'}`, talentFeedback || 'Learn one rank in a talent to unlock the next talent in its branch.');
   feedback.setAttribute('role', 'status');
   content.append(feedback);
   const branches = element('div', 'talent-branches');
@@ -260,8 +269,7 @@ function talentsPanel() {
 
 function inventoryPanel() {
   const content = panel('THIS LIFE ONLY', 'Your equipment', 'Gear replaces the item in its slot. Relics and talents add to its effects.', 'inventory-panel');
-  content.append(element('p', 'currency-line', `${game.gold} GOLD · ${game.embers} RUN EMBERS`));
-  content.append(button('Back to the run', toggleInventory, 'secondary-button panel-back'));
+  content.append(panelToolbar(`${game.gold} GOLD · ${game.embers} RUN EMBERS`, toggleInventory, 'Back to the run'));
   const slots = element('div', 'equipment-slots');
   for (const slot of ['blade', 'armor', 'charm']) slots.append(equipmentCard(game.inventory[slot], slot));
   content.append(slots);
@@ -272,8 +280,8 @@ function inventoryPanel() {
 
 function shopPanel() {
   const content = panel('THE ASH PEDDLER', game.shop.name ?? 'Merchant', 'Finite stock for this floor. Gear equips immediately; compare its slot before buying.', 'shop-panel');
-  content.append(element('p', 'currency-line', `${game.gold} GOLD TO SPEND · ${game.embers} RUN EMBERS`));
-  content.append(button('Leave the merchant', () => { closeShop(game); syncOverlay(); }, 'secondary-button panel-back'));
+  content.append(element('p', 'compact-scroll-hint', 'Scroll stock to compare and buy'));
+  content.append(panelToolbar(`${game.gold} GOLD · ${game.embers} RUN EMBERS`, () => { closeShop(game); syncOverlay(); }, 'Leave the merchant', 'Leave'));
   const stock = element('div', 'shop-stock');
   for (const entry of game.shop.stock) {
     const card = entry.item ? equipmentCard(entry.item, entry.item.slot, 'stock-card') : element('div', 'stock-card');
@@ -298,10 +306,16 @@ function shopPanel() {
 function lootPanel() {
   const item = game.pendingLoot.item;
   const content = panel('FOUND IN THE ASHES', 'Take this gear?', 'Taking gear replaces the current item in its slot. Leaving it consumes the drop.', 'loot-panel');
+  content.dataset.focusHeading = 'true';
+  content.append(element('p', 'compact-scroll-hint', 'Scroll to compare, equip, or leave'));
   content.append(equipmentCard(item, item.slot), equipmentComparison(item));
   const actions = element('div', 'loot-actions');
-  actions.append(button(`Equip ${item.name}`, () => { if (resolveLoot(game, true)) { syncOverlay(); announce(`${item.name} equipped.`); } }), button('Leave it', () => { resolveLoot(game, false); syncOverlay(); announce('Gear left behind.'); }, 'secondary-button'));
-  content.append(actions, element('p', 'menu-hint', 'ESCAPE TO LEAVE · THE KEEP IS PAUSED'));
+  const leave = button('Leave it', () => { resolveLoot(game, false); syncOverlay(); announce('Gear left behind.'); }, 'secondary-button');
+  leave.setAttribute('aria-describedby', 'loot-leave-note');
+  actions.append(button(`Equip ${item.name}`, () => { if (resolveLoot(game, true)) { syncOverlay(); announce(`${item.name} equipped.`); } }), leave);
+  const leaveNote = element('p', 'item-description', 'Leaving consumes this drop.');
+  leaveNote.id = 'loot-leave-note';
+  content.append(actions, leaveNote, element('p', 'menu-hint', 'ESCAPE TO LEAVE · THE KEEP IS PAUSED'));
   return content;
 }
 
@@ -418,7 +432,7 @@ function syncOverlay(preferredFocus) {
     requestAnimationFrame(() => {
       if (destroyed || !overlay.contains(content)) return;
       const retained = focusToken && [...content.querySelectorAll('button:not(:disabled)')].find((node) => node.dataset.talent === focusToken || node.dataset.stock === focusToken);
-      (retained ?? content.querySelector('button:not(:disabled)') ?? content).focus({ preventScroll: Boolean(retained) });
+      (retained ?? (content.dataset.focusHeading ? content : content.querySelector('button:not(:disabled)') ?? content)).focus({ preventScroll: Boolean(retained) });
     });
   } else if (wasOpen) {
     const target = previousFocus === canvas || !previousFocus?.isConnected ? canvas : previousFocus;
@@ -505,8 +519,9 @@ const menuKeyboard = (event) => {
     if (!buttons.length) { event.preventDefault(); overlay.firstChild?.focus(); return; }
     const first = buttons[0];
     const last = buttons.at(-1);
-    if (event.shiftKey && (document.activeElement === first || !overlay.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
-    else if (!event.shiftKey && (document.activeElement === last || !overlay.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+    const focused = buttons.indexOf(document.activeElement);
+    if (event.shiftKey && focused <= 0) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && (focused < 0 || document.activeElement === last)) { event.preventDefault(); first.focus(); }
   }
 };
 window.addEventListener('keydown', menuKeyboard);

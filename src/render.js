@@ -1,3 +1,5 @@
+import { fillPixelPolygon } from './pixel-raster.js';
+
 const WIDTH = 640;
 const HEIGHT = 360;
 const TAU = Math.PI * 2;
@@ -5,9 +7,9 @@ const MAX_PARTICLES = 230;
 const MAX_LABELS = 24;
 
 const THEMES = [
-  { sky: '#090f20', far: '#142337', middle: '#1d3542', wall: '#182e37', stone: '#263e46', top: '#4c7776', glow: '#62e6c2', shadow: '#111d29' },
-  { sky: '#100e23', far: '#251c38', middle: '#352b43', wall: '#272938', stone: '#38404a', top: '#708178', glow: '#b0efbe', shadow: '#1c1c2d' },
-  { sky: '#120e20', far: '#291e33', middle: '#3e293c', wall: '#332936', stone: '#49404a', top: '#997d73', glow: '#7de6db', shadow: '#241a2a' },
+  { sky: '#090f20', bands: ['#0b1021', '#0a1021', '#090f20', '#101c2a', '#162938', '#1d3542'], far: '#142337', middle: '#1d3542', wall: '#182e37', stone: '#263e46', top: '#4c7776', glow: '#62e6c2', shadow: '#111d29' },
+  { sky: '#100e23', bands: ['#0b1021', '#100e23', '#171329', '#201a31', '#2a233a', '#352b43'], far: '#251c38', middle: '#352b43', wall: '#272938', stone: '#38404a', top: '#708178', glow: '#b0efbe', shadow: '#1c1c2d' },
+  { sky: '#120e20', bands: ['#0b1021', '#120e20', '#1b1528', '#281c30', '#332337', '#3e293c'], far: '#291e33', middle: '#3e293c', wall: '#332936', stone: '#49404a', top: '#997d73', glow: '#7de6db', shadow: '#241a2a' },
 ];
 
 const FONT = {
@@ -30,15 +32,12 @@ function hash(x, y = 0, seed = 0) {
   return ((value ^ (value >>> 16)) >>> 0) / 4294967296;
 }
 function rect(ctx, color, x, y, w, h) {
+  if (!(w > 0 && h > 0)) return;
   ctx.fillStyle = color;
   ctx.fillRect(Math.round(x), Math.round(y), Math.ceil(w), Math.ceil(h));
 }
 function polygon(ctx, color, points) {
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  points.forEach(([x, y], i) => { if (i) ctx.lineTo(Math.round(x), Math.round(y)); else ctx.moveTo(Math.round(x), Math.round(y)); });
-  ctx.closePath();
-  ctx.fill();
+  fillPixelPolygon(ctx, color, points, WIDTH, HEIGHT);
 }
 function pixelText(ctx, text, x, y, color = '#d8f4e8', scale = 1, centered = false) {
   const value = String(text).toUpperCase();
@@ -54,10 +53,19 @@ function pixelText(ctx, text, x, y, color = '#d8f4e8', scale = 1, centered = fal
 function glow(ctx, x, y, radius, color, strength = 1) {
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
-  for (let i = 5; i > 0; i--) {
-    const size = radius * i / 5;
-    ctx.globalAlpha = strength * (i === 1 ? 0.12 : 0.035);
-    polygon(ctx, color, [[x - size, y - size * .38], [x - size * .55, y - size * .85], [x + size * .55, y - size * .85], [x + size, y - size * .38], [x + size, y + size * .38], [x + size * .55, y + size * .85], [x - size * .55, y + size * .85], [x - size, y + size * .38]]);
+  const intensity = Math.ceil(clamp(strength, 0, 1) * 4) / 4;
+  for (let i = 3; i > 0; i--) {
+    const size = Math.round(radius * i / 12) * 4;
+    ctx.globalAlpha = intensity * (i === 1 ? .16 : i === 2 ? .08 : .04);
+    // Four-pixel corners and three flat light bands make the halo part of the
+    // authored pixel scene; sparse square flecks break up its outer edge.
+    polygon(ctx, color, [[x - size, y - size * .25], [x - size * .75, y - size * .25], [x - size * .75, y - size * .5], [x - size * .5, y - size * .5], [x - size * .5, y - size * .75], [x + size * .5, y - size * .75], [x + size * .5, y - size * .5], [x + size * .75, y - size * .5], [x + size * .75, y - size * .25], [x + size, y - size * .25], [x + size, y + size * .25], [x + size * .75, y + size * .25], [x + size * .75, y + size * .5], [x + size * .5, y + size * .5], [x + size * .5, y + size * .75], [x - size * .5, y + size * .75], [x - size * .5, y + size * .5], [x - size * .75, y + size * .5], [x - size * .75, y + size * .25], [x - size, y + size * .25]]);
+  }
+  ctx.globalAlpha = intensity * .08;
+  for (let i = -2; i <= 2; i++) {
+    const offset = i * 8;
+    rect(ctx, color, x - radius + 4 + Math.abs(i) * 4, y + offset, 2, 2);
+    rect(ctx, color, x + radius - 6 - Math.abs(i) * 4, y + offset, 2, 2);
   }
   ctx.restore();
 }
@@ -106,19 +114,24 @@ function drawTorch(ctx, x, y, time, seed, small = false) {
 }
 
 function drawBackdrop(ctx, game, camera, theme, time) {
-  rect(ctx, theme.sky, 0, 0, WIDTH, HEIGHT);
-  const upper = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  upper.addColorStop(0, '#0b1021');
-  upper.addColorStop(.5, theme.sky);
-  upper.addColorStop(1, theme.middle);
-  ctx.fillStyle = upper;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  for (let band = 0; band < theme.bands.length; band++) {
+    const y = band * 60;
+    rect(ctx, theme.bands[band], 0, y, WIDTH, 60);
+    if (band) for (let x = 0; x < WIDTH; x += 8) {
+      rect(ctx, theme.bands[band - 1], x + (band % 2) * 4, y, 4, 2);
+      if (x % 16 === 0) rect(ctx, theme.bands[band], x, y - 2, 2, 2);
+    }
+  }
   const farX = camera.x * .15;
   const farY = camera.y * .13;
   const moonX = 468 - camera.x * .028;
   glow(ctx, moonX, 54 - farY, 70, theme.glow, .75);
   polygon(ctx, '#3f6769', [[moonX - 17, 39 - farY], [moonX - 11, 27 - farY], [moonX + 10, 27 - farY], [moonX + 19, 36 - farY], [moonX + 18, 56 - farY], [moonX + 8, 65 - farY], [moonX - 9, 65 - farY], [moonX - 18, 56 - farY]]);
   polygon(ctx, '#152c3b', [[moonX - 1, 27 - farY], [moonX + 14, 29 - farY], [moonX + 19, 36 - farY], [moonX + 18, 56 - farY], [moonX + 8, 65 - farY], [moonX + 1, 62 - farY], [moonX + 7, 53 - farY], [moonX + 8, 40 - farY]]);
+  rect(ctx, '#527a78', moonX - 10, 35 - farY, 6, 2);
+  rect(ctx, '#527a78', moonX - 13, 37 - farY, 3, 6);
+  rect(ctx, '#2a515a', moonX - 9, 49 - farY, 4, 3);
+  rect(ctx, '#2a515a', moonX - 5, 52 - farY, 3, 2);
   for (let i = -1; i < 10; i++) {
     const index = Math.floor(farX / 104) + i;
     const x = index * 104 - farX;
@@ -128,6 +141,10 @@ function drawBackdrop(ctx, game, camera, theme, time) {
     rect(ctx, '#25434b', x + 22, top + 22, 4, 22);
     rect(ctx, '#25434b', x + 78, top + 36, 3, 17);
     rect(ctx, '#304e51', x + 24, top - 25, 2, 10);
+    for (let row = 0; row < 3; row++) {
+      rect(ctx, '#1b2e3d', x + 3 + row % 2 * 6, top + 58 + row * 24, 12, 2);
+      rect(ctx, '#1b2e3d', x + 53, top + 77 + row * 22, 8, 2);
+    }
   }
   const midX = camera.x * .37;
   const midY = camera.y * .26;
@@ -153,7 +170,7 @@ function drawBackdrop(ctx, game, camera, theme, time) {
     if (index % 2 === 0) drawChain(ctx, x + 116, top + 60, 83, index);
   }
   ctx.save();
-  ctx.globalAlpha = .075;
+  ctx.globalAlpha = .06;
   polygon(ctx, theme.glow, [[110 - camera.x * .1, 0], [145 - camera.x * .1, 0], [338 - camera.x * .1, HEIGHT], [235 - camera.x * .1, HEIGHT]]);
   polygon(ctx, theme.glow, [[510 - camera.x * .1, 0], [530 - camera.x * .1, 0], [624 - camera.x * .1, HEIGHT], [547 - camera.x * .1, HEIGHT]]);
   ctx.restore();
@@ -172,6 +189,9 @@ function drawRoom(ctx, room, camera, theme, seed, time, ground) {
     const width = (room.w - 88) / count - columnWidth;
     arch(ctx, bx + columnWidth, ceiling + 14, width, bottom - ceiling - 15, theme.wall, 7);
     arch(ctx, bx + columnWidth + 7, ceiling + 21, width - 14, bottom - ceiling - 22, '#29454a', 1);
+    const crown = bx + columnWidth + width / 2;
+    rect(ctx, '#355052', crown - 3, ceiling + 10 - width * .05, 6, 8);
+    rect(ctx, '#102731', crown - 3, ceiling + 16 - width * .05, 6, 2);
     rect(ctx, '#152b34', bx, ceiling + 19, columnWidth, bottom - ceiling);
     rect(ctx, '#2c474b', bx + 3, ceiling + 20, 3, bottom - ceiling - 20);
     rect(ctx, '#314e50', bx - 3, ceiling + 33, columnWidth + 6, 5);
@@ -180,6 +200,8 @@ function drawRoom(ctx, room, camera, theme, seed, time, ground) {
     for (let k = 56; k < bottom - ceiling - 22; k += 35) {
       rect(ctx, '#0e2630', bx, ceiling + k, columnWidth, 1);
       rect(ctx, '#365156', bx + 4, ceiling + k + 1, 5, 1);
+      rect(ctx, '#213a42', bx + columnWidth - 5, ceiling + k - 9, 3, 2);
+      rect(ctx, '#355052', bx + 5, ceiling + k + 12, 2, 3);
     }
     const windowX = bx + columnWidth + width * .35;
     if (relic || i % 3 === 1) {
@@ -227,6 +249,8 @@ function drawPlatform(ctx, platform, camera, theme, seed) {
     for (let i = start; i < end; i += 12) {
       rect(ctx, '#403f36', x + i + 9, y + 1, 2, 6);
       rect(ctx, '#8e7958', x + i + 2, y + 3, 7, 1);
+      rect(ctx, '#544c3d', x + i + 4, y + 4, 3, 2);
+      rect(ctx, '#b4a579', x + i + 2, y, 3, 1);
     }
     for (let i = 12; i < width; i += 48) {
       if (x + i < -10 || x + i > WIDTH + 10) continue;
@@ -247,9 +271,20 @@ function drawPlatform(ctx, platform, camera, theme, seed) {
       rect(ctx, color, bx, y + row * 12 + 3, bw, 10);
       rect(ctx, '#142831', bx, y + row * 12 + 11, bw, 2);
       if (noise > .25) rect(ctx, '#3d5557', bx + 3, y + row * 12 + 4, Math.min(bw - 4, 8 + noise * 11), 1);
+      if (bw > 5) {
+        rect(ctx, '#405a5b', bx + 1, y + row * 12 + 5, 1, 3);
+        rect(ctx, '#192e37', bx + bw - 2, y + row * 12 + 6, 2, 5);
+        rect(ctx, '#1b3039', bx + 2, y + row * 12 + 10, 3, 1);
+      }
+      if (noise > .45 && bw > 12) {
+        rect(ctx, '#334b50', bx + 6, y + row * 12 + 7, 3, 2);
+        rect(ctx, '#40585a', bx + 9, y + row * 12 + 7, 2, 1);
+        rect(ctx, '#1c323b', bx + 8, y + row * 12 + 9, 3, 1);
+      }
       if (noise > .8) {
-        rect(ctx, '#142b35', bx + 14, y + row * 12 + 5, 1, 4);
-        rect(ctx, '#142b35', bx + 12, y + row * 12 + 9, 3, 1);
+        rect(ctx, '#142b35', bx + 14, y + row * 12 + 5, 2, 2);
+        rect(ctx, '#142b35', bx + 12, y + row * 12 + 7, 2, 3);
+        rect(ctx, '#142b35', bx + 10, y + row * 12 + 9, 3, 1);
       }
     }
   }
@@ -257,10 +292,15 @@ function drawPlatform(ctx, platform, camera, theme, seed) {
   rect(ctx, '#162d35', x, y + 2, width, 2);
   for (let i = start; i < end; i += 7) {
     const noise = hash(platform.x + i, platform.y, seed);
-    if (noise > .43) rect(ctx, '#4c6e52', x + i, y - 2, 3 + noise * 4, 2);
+    if (noise > .43) {
+      rect(ctx, '#4c6e52', x + i, y - 2, 3 + noise * 4, 2);
+      rect(ctx, '#6e8a63', x + i + 1, y - 2, 2, 1);
+      rect(ctx, '#375445', x + i + 3, y + 3, 3, 2);
+    }
     if (noise > .8) {
-      rect(ctx, '#79936c', x + i + 2, y - 4, 1, 3);
-      rect(ctx, '#375445', x + i + 5, y + 3, 1, 4 + noise * 5);
+      rect(ctx, '#79936c', x + i + 2, y - 4, 2, 2);
+      rect(ctx, '#375445', x + i + 5, y + 4, 2, 4 + noise * 5);
+      rect(ctx, '#527557', x + i + 3, y + 7, 2, 2);
     }
   }
   if (platform.y < 390 && width < 420) {
@@ -400,7 +440,7 @@ function drawSlash(ctx, entity, pose, enemy = false, reducedMotion = false) {
     inner.unshift([pose[0] + Math.cos(angle) * (radius - thickness), pose[1] + Math.sin(angle) * (radius - thickness)]);
   }
   ctx.save();
-  ctx.globalAlpha = .85 * Math.sin(progress * Math.PI);
+  ctx.globalAlpha = Math.ceil(Math.sin(progress * Math.PI) * 4) / 4 * .85;
   polygon(ctx, color, outer.concat(inner));
   polygon(ctx, enemy ? '#f4d6b0' : finisher ? '#fff0bd' : '#eefff1', outer.slice(2).concat(inner.slice(0, -2)));
   ctx.restore();
@@ -477,6 +517,8 @@ function drawHero(ctx, player, time, reducedMotion) {
   polygon(ctx, '#0a1b28', [[-8, -27], [5, -27], [9, -17], [6, -10], [-7, -10], [-9, -19]]);
   polygon(ctx, '#315867', [[-6, -25], [4, -26], [7, -18], [4, -11], [-6, -12]]);
   rect(ctx, '#52818a', 1, -24, 3, 10);
+  rect(ctx, '#759c9b', 1, -24, 3, 2);
+  rect(ctx, '#1c3a49', -4, -19, 3, 2);
   polygon(ctx, '#203e51', [[-7, -23], [-10, -14], [-6, -8], [0, -11], [-2, -22]]);
   rect(ctx, '#be9468', -7, -13, 13, 3);
   rect(ctx, '#e3c793', 2, -13, 3, 3);
@@ -495,6 +537,7 @@ function drawHero(ctx, player, time, reducedMotion) {
   rect(ctx, '#101e26', 2, -31, 5, 2);
   rect(ctx, '#aaffd5', 3, -31, 3, 1);
   rect(ctx, '#edc58c', 6, -28, 3, 1);
+  rect(ctx, '#907548', 0, -29, 2, 2);
   const flutter = Math.round(Math.sin(time * 11) * (running ? 3 : 1));
   polygon(ctx, '#71372d', [[-5, -27], [-13, -27], [-22, -24 + flutter], [-28, -27 + flutter], [-25, -21 + flutter], [-18, -22 + flutter], [-9, -24], [-3, -23]]);
   polygon(ctx, '#bc6946', [[-5, -27], [-14, -26], [-22, -23 + flutter], [-17, -22 + flutter], [-8, -24], [-3, -24]]);
@@ -520,6 +563,8 @@ function drawWalker(ctx, enemy, time, flash) {
   rect(ctx, flash ? '#e1ffd6' : '#59735c', -5, -23, 10, 11);
   rect(ctx, '#94ac7c', -4, -23, 2, 10);
   rect(ctx, '#324d42', 0, -21, 3, 8);
+  rect(ctx, '#b0b78a', -3, -21, 2, 2);
+  rect(ctx, '#263d35', 3, -17, 2, 3);
   rect(ctx, '#493b31', -7, -13, 15, 3);
   rect(ctx, '#bbc799', 3, -13, 2, 3);
   rect(ctx, '#101c24', -11, -24, 5, 15);
@@ -548,6 +593,8 @@ function drawArcher(ctx, enemy, time, flash) {
   polygon(ctx, '#141c2b', [[-7, -26], [5, -26], [9, -6], [5, -9], [2, -5], [-2, -9], [-7, -6], [-10, -12]]);
   polygon(ctx, flash ? '#f5e5ff' : '#655971', [[-5, -25], [4, -25], [6, -13], [1, -10], [-6, -13]]);
   rect(ctx, '#947588', -4, -24, 2, 10);
+  rect(ctx, '#b698a0', -4, -24, 4, 1);
+  rect(ctx, '#41394f', 1, -20, 3, 4);
   rect(ctx, '#302738', -6, -14, 13, 3);
   rect(ctx, '#c5b292', 3, -14, 2, 3);
   rect(ctx, '#80647c', -11, -25, 4, 17);
@@ -600,6 +647,8 @@ function drawBrute(ctx, enemy, time, flash) {
   polygon(ctx, flash ? '#ffead3' : '#6e7070', [[-11, -33], [8, -34], [12, -29], [9, -15], [-10, -16]]);
   rect(ctx, '#97958b', -9, -31, 5, 13);
   rect(ctx, '#434f59', 1, -31, 7, 12);
+  rect(ctx, '#b3aa95', -8, -31, 3, 2);
+  rect(ctx, '#56616a', 3, -27, 3, 2);
   for (let j = 0; j < 3; j++) rect(ctx, '#b8a27d', -6 + j * 7, -30 + j % 2 * 5, 2, 2);
   rect(ctx, '#493d35', -12, -17, 25, 5);
   rect(ctx, '#bb976c', -1, -17, 5, 5);
@@ -639,6 +688,8 @@ function drawBoss(ctx, enemy, time, flash) {
   rect(ctx, '#829b85', -13, -47, 6, 20);
   rect(ctx, '#304a50', 1, -47, 9, 22);
   rect(ctx, '#b2bc9a', -5, -44, 3, 15);
+  rect(ctx, '#a5b49a', -12, -46, 3, 2);
+  rect(ctx, '#1d3942', 5, -35, 4, 2);
   rect(ctx, '#c1c198', -8, -39, 11, 3);
   polygon(ctx, '#aa9575', [[-4, -32], [-8, -27], [-3, -23], [2, -27]]);
   rect(ctx, '#473b38', -16, -24, 33, 6);
@@ -807,11 +858,12 @@ function drawForeground(ctx, camera, seed, ground, time, reducedMotion) {
     }
   }
   if (floorY > HEIGHT - 54) {
-    const haze = ctx.createLinearGradient(0, HEIGHT - 32, 0, HEIGHT);
-    haze.addColorStop(0, 'rgba(7,20,28,0)');
-    haze.addColorStop(1, 'rgba(7,20,28,.48)');
-    ctx.fillStyle = haze;
-    ctx.fillRect(0, HEIGHT - 32, WIDTH, 32);
+    ctx.save();
+    for (let band = 0; band < 3; band++) {
+      ctx.globalAlpha = [.08, .16, .28][band];
+      rect(ctx, '#07141c', 0, HEIGHT - 24 + band * 8, WIDTH, 8);
+    }
+    ctx.restore();
   }
 }
 
@@ -937,7 +989,7 @@ export function createRenderer(canvas) {
       particle.vy += (particle.kind === 'spark' ? 190 : particle.kind === 'mote' ? -30 : -8) * step;
       particle.vx *= Math.exp(-step * (particle.kind === 'spark' ? 2 : 5));
       ctx.save();
-      ctx.globalAlpha = clamp(particle.life / particle.maxLife * (particle.kind === 'smoke' ? .4 : 1), 0, 1);
+      ctx.globalAlpha = Math.ceil(clamp(particle.life / particle.maxLife, 0, 1) * 4) / 4 * (particle.kind === 'smoke' ? .4 : 1);
       rect(ctx, particle.color, particle.x - view.x, particle.y - view.y, particle.size, particle.size);
       if (particle.kind === 'spark' && Math.abs(particle.vx) > 35) rect(ctx, particle.color, particle.x - view.x - particle.vx * .018, particle.y - view.y - particle.vy * .012, particle.size, 1);
       ctx.restore();
@@ -949,7 +1001,7 @@ export function createRenderer(canvas) {
       const x = label.x - view.x;
       const y = label.y - view.y;
       ctx.save();
-      ctx.globalAlpha = clamp(label.life / .2, 0, 1);
+      ctx.globalAlpha = Math.ceil(clamp(label.life / .2, 0, 1) * 4) / 4;
       pixelText(ctx, label.text, x + 1, y + 1, '#12232b', 2, true);
       pixelText(ctx, label.text, x, y, label.color, 2, true);
       ctx.restore();
@@ -959,25 +1011,23 @@ export function createRenderer(canvas) {
     for (let i = 0; i < 28; i++) {
       const x = ((hash(i, 5, game.seed) * (WIDTH + 60) - view.x * .3 + time * (3 + i % 3)) % (WIDTH + 60) + WIDTH + 60) % (WIDTH + 60) - 20;
       const y = (hash(i, 8, game.seed) * HEIGHT + Math.sin(time * .7 + i) * 5 - view.y * .18 + HEIGHT) % HEIGHT;
-      ctx.globalAlpha = .13 + hash(i, 7, game.seed) * .2;
+      ctx.globalAlpha = [.16, .24, .32][i % 3];
       rect(ctx, i % 4 ? '#a2c4aa' : '#e7cf99', x, y, 1, i % 4 ? 1 : 2);
     }
     ctx.globalAlpha = 1;
     for (let i = 0; i < 3; i++) {
       const x = ((time * (i + 1) * 4 - view.x * .22 + i * 211) % 850 + 850) % 850 - 200;
-      ctx.globalAlpha = .022;
-      rect(ctx, '#bbdec4', x, ground - view.y - 21 - i * 18, 120 + i * 37, 3);
+      ctx.globalAlpha = .04;
+      for (let segment = 0; segment < 5; segment++) rect(ctx, '#bbdec4', x + segment * 23, ground - view.y - 21 - i * 18 + segment % 2, 15 + i * 3, 2);
     }
     ctx.globalAlpha = 1;
     drawForeground(ctx, view, game.seed, ground, time, reducedMotion);
     // A restrained frame keeps the bright UI and central combat readable.
-    const vignette = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-    vignette.addColorStop(0, 'rgba(4,10,22,.33)');
-    vignette.addColorStop(.3, 'rgba(4,10,22,0)');
-    vignette.addColorStop(.8, 'rgba(4,10,22,0)');
-    vignette.addColorStop(1, 'rgba(4,10,22,.2)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.globalAlpha = .16;
+    rect(ctx, '#040a16', 0, 0, WIDTH, 8);
+    ctx.globalAlpha = .08;
+    rect(ctx, '#040a16', 0, 8, WIDTH, 16);
+    rect(ctx, '#040a16', 0, HEIGHT - 12, WIDTH, 12);
     ctx.restore();
   }
 

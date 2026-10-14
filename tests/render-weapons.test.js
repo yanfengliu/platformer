@@ -7,36 +7,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createGame, updateGame } from '../src/game.js';
+import { recordingCanvas, shapeDistance, boundarySegments } from './helpers/recording-canvas.js';
 
 // The optional source pins the pre-repair renderer for the red proof without
 // changing production files or substituting a pose helper for the real renderer.
 const { createRenderer } = await import(process.env.EMBERWAKE_RENDER_SOURCE
   ? pathToFileURL(process.env.EMBERWAKE_RENDER_SOURCE).href : '../src/render.js');
-
-function recordingCanvas() {
-  const draws = [];
-  let matrix = [1, 0, 0, 1, 0, 0];
-  let path = [];
-  const stack = [];
-  const ctx = {
-    fillStyle: '', globalAlpha: 1, globalCompositeOperation: 'source-over',
-    save() { stack.push({ matrix: [...matrix], fillStyle: this.fillStyle, globalAlpha: this.globalAlpha, globalCompositeOperation: this.globalCompositeOperation }); },
-    restore() { const state = stack.pop(); matrix = state.matrix; Object.assign(this, { fillStyle: state.fillStyle, globalAlpha: state.globalAlpha, globalCompositeOperation: state.globalCompositeOperation }); },
-    setTransform(...values) { matrix = values; },
-    translate(x, y) { matrix[4] += matrix[0] * x + matrix[2] * y; matrix[5] += matrix[1] * x + matrix[3] * y; },
-    scale(x, y) { matrix[0] *= x; matrix[1] *= x; matrix[2] *= y; matrix[3] *= y; },
-    beginPath() { path = []; },
-    moveTo(x, y) { path.push(point(x, y)); },
-    lineTo(x, y) { path.push(point(x, y)); },
-    closePath() {},
-    fill() { draws.push({ color: this.fillStyle, points: [...path] }); },
-    fillRect(x, y, w, h) { draws.push({ color: this.fillStyle, points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(([px, py]) => point(px, py)) }); },
-    clearRect() {},
-    createLinearGradient() { return { addColorStop() {} }; },
-  };
-  function point(x, y) { return [matrix[0] * x + matrix[2] * y + matrix[4], matrix[1] * x + matrix[3] * y + matrix[5]]; }
-  return { draws, getContext: () => ctx };
-}
 
 const WEAPONS = {
   hero: { color: '#ebf8dd', idleColor: '#6e9291', hand: '#d5be95', handle: '#ce955e', w: 18, h: 34, duration: .27 },
@@ -66,7 +42,7 @@ function weapon(draws, type) {
   return geometry.points;
 }
 function distance(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
-function displacement(a, b) { return Math.max(...a.map((point, i) => distance(point, b[i]))); }
+function displacement(a, b) { return shapeDistance(a, b); }
 function offsets(points) { return points.map(point => [point[0] - points[0][0], point[1] - points[0][1]]); }
 function centroid(points) { return points.reduce(([x, y], point) => [x + point[0] / points.length, y + point[1] / points.length], [0, 0]); }
 function segmentDistance(point, a, b) {
@@ -90,7 +66,7 @@ for (const type of Object.keys(WEAPONS)) {
           assert.ok(hand, `${type} must draw the gripping hand`);
           const grip = centroid(hand.points);
           const handle = draws.find(draw => draw.color === WEAPONS[type].handle) || draws.find(draw => draw.color === WEAPONS[type].color);
-          assert.ok(Math.min(...handle.points.map((point, i) => segmentDistance(grip, point, handle.points[(i + 1) % handle.points.length]))) <= 6, `${type} weapon must stay at the hand`);
+          assert.ok(Math.min(...boundarySegments(handle).map(([start, end]) => segmentDistance(grip, start, end))) <= 6, `${type} weapon must stay at the hand`);
           return points;
         });
         for (let i = 1; i < samples.length; i++) assert.ok(displacement(samples[i - 1], samples[i]) >= 3, `${type} physical weapon is frozen between attack samples ${i - 1}/${i}`);
@@ -132,8 +108,12 @@ test('melee slash leading edge follows the physical blade or weapon head', () =>
           const slashColor = type === 'hero' ? ['#98fff0', '#5ae8e1', '#ffc36e'][combo - 1] : '#fca372';
           const slash = draws.find(draw => draw.color === slashColor);
           assert.ok(slash, `${type} active swing must draw its slash`);
-          const leadingEdge = slash.points[8];
-          assert.ok(Math.min(...points.map((point, i) => segmentDistance(leadingEdge, point, points[(i + 1) % points.length]))) <= 6, `${type} slash must follow the physical blade/head`);
+          const tipColor = type === 'hero' ? combo === 3 ? '#ffe7a3' : '#caffed' : '#ff9d6a';
+          const tip = draws.find(draw => draw.color === tipColor && draw.kind === 'rect');
+          assert.ok(tip, `${type} slash must draw its leading tip`);
+          const leadingEdge = centroid(tip.points);
+          const blade = draws.find(draw => draw.color === WEAPONS[type].color || draw.color === WEAPONS[type].idleColor);
+          assert.ok(Math.min(...boundarySegments(blade).map(([start, end]) => segmentDistance(leadingEdge, start, end))) <= 6, `${type} slash must follow the physical blade/head`);
         }
       }
     }

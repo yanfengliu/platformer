@@ -7,6 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { recordingCanvas, ribbonThickness } from './helpers/recording-canvas.js';
 
 const source = (name) => process.env.EMBERWAKE_COMBO_SOURCE
   ? pathToFileURL(resolve(process.env.EMBERWAKE_COMBO_SOURCE, name)).href : `../src/${name}`;
@@ -149,26 +150,6 @@ test('hits carry explicit sword stage while amount remains actual damage', () =>
   }
 });
 
-function recordingCanvas() {
-  const draws = [];
-  let matrix = [1, 0, 0, 1, 0, 0];
-  let path = [];
-  const stack = [];
-  const point = (x, y) => [matrix[0] * x + matrix[2] * y + matrix[4], matrix[1] * x + matrix[3] * y + matrix[5]];
-  const ctx = {
-    fillStyle: '', globalAlpha: 1, globalCompositeOperation: 'source-over',
-    save() { stack.push({ matrix: [...matrix], fillStyle: this.fillStyle, globalAlpha: this.globalAlpha, globalCompositeOperation: this.globalCompositeOperation }); },
-    restore() { const state = stack.pop(); matrix = state.matrix; Object.assign(this, state); },
-    setTransform(...values) { matrix = values; },
-    translate(x, y) { matrix[4] += matrix[0] * x + matrix[2] * y; matrix[5] += matrix[1] * x + matrix[3] * y; },
-    scale(x, y) { matrix[0] *= x; matrix[1] *= x; matrix[2] *= y; matrix[3] *= y; },
-    beginPath() { path = []; }, moveTo(x, y) { path.push(point(x, y)); }, lineTo(x, y) { path.push(point(x, y)); }, closePath() {},
-    fill() { draws.push({ color: this.fillStyle, points: [...path], alpha: this.globalAlpha }); },
-    fillRect(x, y, w, h) { draws.push({ color: this.fillStyle, points: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(([px, py]) => point(px, py)), alpha: this.globalAlpha }); },
-    clearRect() {}, createLinearGradient() { return { addColorStop() {} }; },
-  };
-  return { draws, getContext: () => ctx };
-}
 function render(game, events = [], options = {}) {
   const canvas = recordingCanvas();
   const renderer = createRenderer(canvas);
@@ -184,7 +165,7 @@ test('empty-space sword stages render distinct slashes and one/two/three numbere
     while (game.player.swing < stage) advance(game, 1, { attackHeld: true });
     advance(game, 10);
     const draws = render(game);
-    const slash = draws.find(draw => draw.color === color && draw.points.length === 18);
+    const slash = draws.find(draw => draw.color === color && ['raster', 'vector'].includes(draw.kind));
     assert.ok(slash, `stage ${stage} must draw its distinct blade-aligned slash without a hit`);
     slashes.push(slash);
     const cue = draws.find(draw => draw.color === '#0e252b' && dimensions(draw)[0] === 46);
@@ -193,8 +174,7 @@ test('empty-space sword stages render distinct slashes and one/two/three numbere
     assert.equal(bars.length, stage, 'the lit step count must match the actual sword stage');
     assert.equal(dimensions(cue)[1], stage === 3 ? 26 : 17, 'the finisher adds its text beneath the three steps');
   }
-  const thickness = (slash) => Math.hypot(slash.points[8][0] - slash.points[9][0], slash.points[8][1] - slash.points[9][1]);
-  assert.ok(thickness(slashes[2]) >= thickness(slashes[0]) + 2, 'the finisher ribbon must be visibly wider while its leading edge stays on the blade');
+  assert.ok(ribbonThickness(slashes[2]) >= ribbonThickness(slashes[0]) + 2, 'the finisher ribbon must be visibly wider while its leading edge stays on the blade');
   advance(game, 110);
   assert.equal(render(game).some(draw => draw.color === '#0e252b'), false, 'the indicator must disappear after timeout');
 });
@@ -207,7 +187,7 @@ test('reduced motion retains finisher slash and steps while cutting empty-space 
   advance(game, 12);
   const normal = render(game, [finisher]);
   const reduced = render(game, [finisher], { reducedMotion: true });
-  const essential = draws => draws.filter(draw => (draw.color === '#ffc36e' && draw.points.length === 18) || draw.color === '#0e252b');
+  const essential = draws => draws.filter(draw => (draw.color === '#ffc36e' && ['raster', 'vector'].includes(draw.kind)) || draw.color === '#0e252b');
   assert.deepEqual(essential(reduced), essential(normal), 'essential stage/weapon feedback must remain identical');
   const sparks = draws => draws.filter(draw => ['#ffc36e', '#fff0bd', '#ed9b45'].includes(draw.color) && draw.points.length === 4 && dimensions(draw)[0] <= 3 && draw.points[0][1] > 200);
   assert.ok(sparks(normal).length >= 8, 'an actual third-stroke event must add sparks without an enemy contact');

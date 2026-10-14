@@ -82,7 +82,19 @@ export function createAudio() {
     play(events) {
       for (const event of events) {
         switch (event.type) {
-          case 'attack': burst(0.085, 0.09, 2700); tone(220, 0.1, 0.07, 'triangle', 65); break;
+          case 'attack':
+            if (event.stage === 3) {
+              burst(0.14, 0.12, 1700);
+              tone(145, 0.18, 0.11, 'triangle', 42);
+              tone(440, 0.12, 0.035, 'sine', 220, 0.025);
+            } else if (event.stage === 2) {
+              burst(0.095, 0.09, 3400);
+              tone(280, 0.11, 0.075, 'triangle', 100);
+            } else {
+              burst(0.085, 0.09, 2700);
+              tone(220, 0.1, 0.07, 'triangle', 65);
+            }
+            break;
           case 'hit': burst(0.08, 0.2, 4000); tone(100, 0.11, 0.26, 'triangle', 34); break;
           case 'damage': burst(0.13, 0.13, 1100); tone(82, 0.25, 0.14, 'sawtooth', 40); break;
           case 'kill': tone(165, 0.15, 0.1, 'triangle', 55); burst(0.16, 0.1, 700); break;

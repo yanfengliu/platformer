@@ -129,7 +129,8 @@ test('melee slash leading edge follows the physical blade or weapon head', () =>
           const { game } = fixture(type, facing, { combo, state: 'attack', attackTime: WEAPONS[type].duration * (1 - progress) });
           const draws = render(game);
           const points = weapon(draws, type);
-          const slash = draws.find(draw => draw.color === (type === 'hero' ? '#98fff0' : '#fca372'));
+          const slashColor = type === 'hero' ? ['#98fff0', '#5ae8e1', '#ffc36e'][combo - 1] : '#fca372';
+          const slash = draws.find(draw => draw.color === slashColor);
           assert.ok(slash, `${type} active swing must draw its slash`);
           const leadingEdge = slash.points[8];
           assert.ok(Math.min(...points.map((point, i) => segmentDistance(leadingEdge, point, points[(i + 1) % points.length]))) <= 6, `${type} slash must follow the physical blade/head`);

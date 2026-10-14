@@ -15,7 +15,7 @@ function isEditable(target) {
 }
 
 /** Buffers edges until the next simulation step; holds use physical key codes. */
-export function createInput(canvas, { onActivity = () => {}, onPause = () => {}, onHelp = () => {}, onMute = () => {} } = {}) {
+export function createInput(canvas, { onActivity = () => {}, onPause = () => {}, onHelp = () => {}, onMute = () => {}, onClear = () => {} } = {}) {
   const keys = new Set();
   const edges = new Set();
   const mouse = new Set();
@@ -32,6 +32,7 @@ export function createInput(canvas, { onActivity = () => {}, onPause = () => {},
     keys.clear();
     edges.clear();
     mouse.clear();
+    onClear();
   };
 
   const held = (action) => [...keys].some((code) => KEY_ACTIONS[code] === action);

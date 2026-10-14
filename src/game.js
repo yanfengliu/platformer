@@ -82,6 +82,17 @@ export function drainEvents(game) {
   return events;
 }
 
+/** Cancel queued actions and combo continuation without rewinding an active swing. */
+export function clearActionBuffers(game) {
+  const player = game.player;
+  player.attackBuffer = 0;
+  player.rollBuffer = 0;
+  player.jumpBuffer = 0;
+  player.comboWindow = 0;
+  if (player.attackTime <= 0) player.combo = 0;
+  game.pendingInput = null;
+}
+
 function timers(entity, dt) {
   for (const key of ['invulnerable', 'hurtTime', 'rollTime', 'rollCooldown', 'rollBuffer', 'attackTime', 'attackCooldown', 'attackBuffer', 'comboWindow', 'jumpBuffer', 'dropTime', 'cooldown']) {
     if (entity[key] > 0) entity[key] = Math.max(0, entity[key] - dt);
@@ -129,7 +140,7 @@ function startPlayerAttack(game) {
   player.attackCooldown = player.attackDuration + 0.06 / game.stats.attackSpeed;
   player.hitEnemies = [];
   player.swing += 1;
-  emit(game, 'attack', centerX(player), centerY(player), { direction: player.facing, amount: player.combo });
+  emit(game, 'attack', centerX(player), centerY(player), { direction: player.facing, amount: player.combo, stage: player.combo });
 }
 
 function damageEnemy(game, enemy, amount, direction) {
@@ -145,7 +156,7 @@ function damageEnemy(game, enemy, amount, direction) {
     enemy.attackTime = 0;
     enemy.cooldown = Math.max(enemy.cooldown, 0.2);
   }
-  emit(game, 'hit', centerX(enemy), centerY(enemy), { amount, direction, target: enemy.id });
+  emit(game, 'hit', centerX(enemy), centerY(enemy), { amount, direction, target: enemy.id, stage: game.player.combo });
   game.hitStop = Math.max(game.hitStop, enemy.hp === 0 ? 0.06 : 0.035);
   if (enemy.hp === 0) {
     enemy.dead = true;
@@ -171,6 +182,7 @@ function damagePlayer(game, amount, direction = 1) {
   player.vx = direction * 235;
   player.vy = -160;
   player.attackTime = 0;
+  clearActionBuffers(game);
   game.combo = 0;
   game.streakTime = 0;
   game.hitStop = 0.055;
@@ -198,12 +210,15 @@ function updatePlayer(game, input, dt) {
   const wasGrounded = player.grounded;
   let jumpStarted = false;
   timers(player, dt);
+  if (player.comboWindow <= 0 && player.attackTime <= 0) player.combo = 0;
   if (wasGrounded) {
     player.coyote = COYOTE;
     player.jumps = 0;
   } else player.coyote = Math.max(0, player.coyote - dt);
   if (input.jumpPressed) player.jumpBuffer = BUFFER;
-  if (input.attackPressed) player.attackBuffer = 0.17;
+  // One queued strike survives this sword's remaining recovery. Extra taps
+  // refresh that one slot; rolls and hurt never store a strike for later.
+  if (input.attackPressed && player.rollTime <= 0 && player.hurtTime <= 0) player.attackBuffer = Math.max(0.17, player.attackCooldown + BUFFER);
   if (input.rollPressed) player.rollBuffer = 0.14;
   const move = Number(Boolean(input.right)) - Number(Boolean(input.left));
   if (move !== 0 && player.rollTime <= 0 && player.hurtTime <= 0) player.facing = move;
@@ -215,6 +230,8 @@ function updatePlayer(game, input, dt) {
     player.attackTime = 0;
     player.rollBuffer = 0;
     player.attackBuffer = 0;
+    player.comboWindow = 0;
+    player.combo = 0;
     emit(game, 'roll', centerX(player), player.y + player.h - 5, { direction: player.facing });
   }
   if (input.healPressed && player.flasks > 0 && player.hp < player.maxHp) {

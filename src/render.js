@@ -382,33 +382,53 @@ function drawWeaponArm(ctx, pose, shoulder, sleeve, skin, width) {
   rect(ctx, skin, hand[0] - width / 2, hand[1] - width / 2, width, width);
 }
 
-function drawSlash(ctx, entity, pose, enemy = false) {
+function drawSlash(ctx, entity, pose, enemy = false, reducedMotion = false) {
   const progress = attackProgress(entity);
   const radius = enemy && entity.type === 'boss' ? 49 : enemy && entity.type === 'brute' ? 27 : 22;
   const bladeAngle = pose[2] + (entity.type === 'boss' ? .34 : 0);
   const direction = !enemy && entity.combo === 2 ? -1 : 1;
-  const span = .65 + Math.sin(progress * Math.PI) * .65;
+  const finisher = !enemy && entity.combo === 3;
+  const color = enemy ? '#fca372' : finisher ? '#ffc36e' : entity.combo === 2 ? '#5ae8e1' : '#98fff0';
+  const span = (finisher ? .8 : .65) + Math.sin(progress * Math.PI) * (finisher ? .9 : .65);
+  const thickness = finisher ? 9 : 5;
   if (progress < .08 || progress > .88) return;
   const outer = [];
   const inner = [];
   for (let i = 0; i <= 8; i++) {
     const angle = bladeAngle - direction * span * (1 - i / 8);
     outer.push([pose[0] + Math.cos(angle) * radius, pose[1] + Math.sin(angle) * radius]);
-    inner.unshift([pose[0] + Math.cos(angle) * (radius - 5), pose[1] + Math.sin(angle) * (radius - 5)]);
+    inner.unshift([pose[0] + Math.cos(angle) * (radius - thickness), pose[1] + Math.sin(angle) * (radius - thickness)]);
   }
   ctx.save();
   ctx.globalAlpha = .85 * Math.sin(progress * Math.PI);
-  polygon(ctx, enemy ? '#fca372' : '#98fff0', outer.concat(inner));
-  polygon(ctx, enemy ? '#f4d6b0' : '#eefff1', outer.slice(2).concat(inner.slice(0, -2)));
+  polygon(ctx, color, outer.concat(inner));
+  polygon(ctx, enemy ? '#f4d6b0' : finisher ? '#fff0bd' : '#eefff1', outer.slice(2).concat(inner.slice(0, -2)));
   ctx.restore();
   const end = outer[outer.length - 1];
-  rect(ctx, enemy ? '#ff9d6a' : '#caffed', end[0] - 2, end[1] - 2, 4, 4);
+  rect(ctx, enemy ? '#ff9d6a' : finisher ? '#ffe7a3' : '#caffed', end[0] - 2, end[1] - 2, 4, 4);
   // Short radial marks communicate the direction without obscuring the target.
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < (reducedMotion ? 0 : finisher ? 5 : 3); i++) {
     const angle = bladeAngle - direction * (span * .75 - i * .25);
     const r = radius + 4 + i * 3;
-    rect(ctx, enemy ? '#d58269' : '#72c4b2', pose[0] + Math.cos(angle) * r, pose[1] + Math.sin(angle) * r, 2, 2);
+    rect(ctx, enemy ? '#d58269' : finisher ? '#ed9b45' : '#72c4b2', pose[0] + Math.cos(angle) * r, pose[1] + Math.sin(angle) * r, finisher ? 3 : 2, 2);
   }
+}
+
+function drawSwordCombo(ctx, player, x, y) {
+  if (!(player.comboWindow > 0) || player.combo < 1 || player.rollTime > 0 || player.hurtTime > 0) return;
+  const stage = player.combo;
+  const color = stage === 3 ? '#ffc36e' : stage === 2 ? '#5ae8e1' : '#98fff0';
+  const left = clamp(Math.round(x) - 23, 4, WIDTH - 50);
+  const top = clamp(Math.round(y) - 60, 10, HEIGHT - 30);
+  rect(ctx, '#0e252b', left, top, 46, stage === 3 ? 26 : 17);
+  for (let i = 1; i <= 3; i++) {
+    const cell = left + 3 + (i - 1) * 14;
+    rect(ctx, i === stage ? color : '#39585b', cell, top + 2, 12, 12);
+    rect(ctx, '#0e252b', cell + 1, top + 3, 10, 10);
+    pixelText(ctx, i, cell + 6, top + 5, i <= stage ? color : '#64817e', 1, true);
+    if (i <= stage) rect(ctx, color, cell + 2, top + 12, 8, 2);
+  }
+  if (stage === 3) pixelText(ctx, 'FINISH', left + 23, top + 19, '#fff0bd', 1, true);
 }
 
 function drawHero(ctx, player, time, reducedMotion) {
@@ -442,7 +462,7 @@ function drawHero(ctx, player, time, reducedMotion) {
   }
   ctx.scale(facing, 1);
   ctx.translate(attacking ? Math.round(Math.sin(attackProgress(player) * Math.PI) * 2) : 0, Math.round(bodyBob));
-  if (attacking) drawSlash(ctx, player, weaponPose);
+  if (attacking) drawSlash(ctx, player, weaponPose, false, reducedMotion);
   const legA = Math.round(airborne ? -3 : step * 4);
   const legB = Math.round(airborne ? 3 : -step * 4);
   // Boots and bent legs have separate dark outlines and light-facing planes.
@@ -828,9 +848,12 @@ export function createRenderer(canvas) {
       if (!event || !Number.isFinite(event.x) || !Number.isFinite(event.y)) continue;
       const x = event.x;
       const y = event.y;
-      if (event.type === 'hit') {
-        spawn(x, y, reducedMotion ? 6 : 15, ['#f6f7bd', '#aef1bf', '#f6bf79', '#73bea2'], 105, 'spark', event.direction || 0);
-        if (!reducedMotion) shake = Math.max(shake, 2.8);
+      if (event.type === 'attack' && event.stage === 3) {
+        spawn(x + (event.direction || 1) * 16, y - 10, reducedMotion ? 2 : 8, ['#ffc36e', '#fff0bd', '#ed9b45'], 55, 'spark', event.direction || 0);
+      } else if (event.type === 'hit') {
+        const finisher = event.stage === 3;
+        spawn(x, y, reducedMotion ? (finisher ? 7 : 6) : (finisher ? 20 : 15), finisher ? ['#ffc36e', '#fff0bd', '#ed9b45'] : ['#f6f7bd', '#aef1bf', '#f6bf79', '#73bea2'], finisher ? 125 : 105, 'spark', event.direction || 0);
+        if (!reducedMotion) shake = Math.max(shake, finisher ? 3.6 : 2.8);
         if (event.amount) labels.push({ x: x + (event.direction || 1) * 7, y: y - 10, text: String(Math.round(event.amount)), color: '#f8edbb', life: .7, maxLife: .7 });
       } else if (event.type === 'damage') {
         spawn(x, y, reducedMotion ? 5 : 12, ['#f49a75', '#d46664', '#ffe0a0'], 89, 'spark', event.direction || 0);
@@ -906,6 +929,7 @@ export function createRenderer(canvas) {
     ctx.translate(Math.round(player.x + player.w / 2 - view.x), Math.round(player.y + player.h - view.y));
     drawHero(ctx, player, time, reducedMotion);
     ctx.restore();
+    drawSwordCombo(ctx, player, player.x + player.w / 2 - view.x, player.y + player.h - view.y);
     for (const particle of particles) {
       particle.life -= step;
       particle.x += particle.vx * step;

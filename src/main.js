@@ -1,4 +1,4 @@
-import { createGame, updateGame, chooseUpgrade, drainEvents } from './game.js';
+import { createGame, updateGame, chooseUpgrade, drainEvents, clearActionBuffers } from './game.js';
 import { createRenderer } from './render.js';
 import { createInput } from './input.js';
 import { createAudio } from './audio.js';
@@ -83,6 +83,7 @@ const input = createInput(canvas, {
   onPause: togglePause,
   onHelp: toggleHelp,
   onMute: toggleMute,
+  onClear: () => clearActionBuffers(game),
 });
 
 function choose(id) {
@@ -119,7 +120,7 @@ function helpPanel() {
   const controls = element('dl', 'help-controls');
   for (const [keys, description] of [
     ['A / D or ← / →', 'Move'], ['Space / W / ↑', 'Jump; press again to double jump'],
-    ['J / Left click', 'Strike; chain presses for a sword combo'], ['K / Shift / Right click', 'Roll through attacks'],
+    ['J / Left click', 'Tap or hold for 1–2–3; the amber third strike finishes'], ['K / Shift / Right click', 'Roll through attacks'],
     ['F', 'Drink a healing flask'], ['E', 'Take a relic or enter the open gate'],
     ['S / ↓ + Jump', 'Drop through a thin platform'], ['Escape', 'Pause / resume'], ['M / H', 'Mute / controls'],
   ]) {

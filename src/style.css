@@ -116,6 +116,41 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
 .page-caption span { color: #a0b38f; }
 .screen-reader-only { position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .no-script { position: fixed; inset: auto 20px 20px; padding: 20px; background: #322a1e; border: 2px solid var(--amber); }
+.profile-notice { color: var(--muted); font-size: 8px; line-height: 16px; margin: 0 0 24px; }
+.menu-panel:focus-visible { outline: 2px solid #fff1b5; outline-offset: -6px; }
+.talents-panel, .shop-panel, .inventory-panel { width: min(900px, 100%); padding: 20px; }
+.talents-panel .menu-copy, .shop-panel .menu-copy, .inventory-panel .menu-copy, .loot-panel .menu-copy { font-size: 8px; line-height: 16px; margin: 12px auto; }
+.currency-line { color: var(--amber); font-size: 16px; line-height: 24px; margin: 12px 0; }
+.storage-notice, .talent-feedback { color: var(--muted); font-size: 8px; line-height: 16px; margin: 12px 0; }
+.panel-back { margin: 12px auto; font-size: 8px; line-height: 16px; padding: 6px 12px; }
+.talent-branches, .equipment-slots, .shop-stock { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; margin-top: 16px; }
+.talent-branch { min-width: 0; }
+.branch-heading { color: var(--amber); font-size: 16px; line-height: 24px; font-weight: normal; margin: 0 0 12px; }
+.talent-card, .equipment-card, .stock-card { padding: 12px; border: 2px solid var(--line); background: #203833; min-width: 0; }
+.talent-card + .talent-card { margin-top: 12px; }
+.talent-learned { border-color: #b38353; }
+.item-label { color: var(--muted); font-size: 8px; line-height: 16px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.item-name { color: #ffe2a5; font-size: 16px; line-height: 24px; font-weight: normal; margin: 0 0 8px; overflow-wrap: anywhere; }
+.item-description { color: #d1d8bb; font-size: 8px; line-height: 16px; margin: 8px 0; overflow-wrap: anywhere; }
+.talent-buy, .stock-buy { width: 100%; text-align: center; border: 2px solid #b38353; padding: 8px; background: #354837; color: #ffe2a5; font-size: 8px; line-height: 16px; }
+.talent-buy:hover:not(:disabled), .stock-buy:hover:not(:disabled) { border-color: var(--amber); background: #455a40; }
+.talent-buy:disabled, .stock-buy:disabled { opacity: .7; color: #bdcba9; }
+.talent-status { min-height: 32px; }
+.recent-lives { margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--line); }
+.reward-copy { color: var(--amber); font-size: 16px; line-height: 24px; margin: 12px 0; }
+.overlay-dead .primary-button, .overlay-won .primary-button { margin-top: 16px; }
+.equipment-comparison { padding-top: 12px; border-top: 2px solid var(--line); margin-top: 12px; text-align: left; }
+.comparison-stats { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 8px; line-height: 16px; margin: 8px 0; }
+.comparison-stats dt { color: var(--muted); }
+.comparison-stats dd { color: var(--pale); margin: 0; }
+.comparison-stats .stat-better { color: #d7dfa6; }
+.comparison-stats .stat-worse { color: #edab79; }
+.price-label { color: var(--amber); font-size: 8px; line-height: 16px; margin: 12px 0 8px; }
+.stock-sold { border-color: #384a42; background: #192b2d; }
+.loot-panel { width: min(560px, 100%); }
+.loot-panel .equipment-card { text-align: left; }
+.loot-actions { margin-top: 16px; }
+.loot-actions .primary-button { font-size: 8px; line-height: 16px; padding: 8px 12px; }
 @media (min-width: 1440px) {
   .game-shell { padding-top: 32px; }
   .masthead { margin-bottom: 24px; }
@@ -129,8 +164,8 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .title-sigil, .title-tags { display: none; }
   .title-panel .eyebrow { letter-spacing: 2px; margin-bottom: 16px; }
   .title-panel .menu-heading { font-size: 64px; }
-  .title-panel .menu-copy { font-size: 8px; line-height: 16px; margin: 20px auto 12px; max-width: 400px; }
-  .title-description { margin-bottom: 20px; max-width: 320px; }
+  .title-panel .menu-copy { font-size: 8px; line-height: 12px; margin: 8px auto; max-width: 400px; }
+  .title-description { display: none; }
   .title-panel .menu-hint { margin-top: 12px; }
   .title-panel .secondary-button { margin-top: 12px; }
   .control-legend { gap: 12px; }
@@ -146,7 +181,7 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .tool-button { padding: 8px; }
   .title-panel .menu-heading { font-size: 48px; }
   .title-panel .eyebrow { margin-bottom: 12px; }
-  .title-panel .menu-copy { margin-top: 16px; }
+  .title-panel .menu-copy { margin: 8px auto; }
   .title-description { margin-bottom: 16px; }
   .title-panel .primary-button { padding: 8px 16px; }
   .title-panel .secondary-button { padding: 6px 16px; margin-top: 12px; }
@@ -183,6 +218,8 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .title-panel .menu-heading { font-size: 40px; }
   .title-panel .menu-copy { margin: 12px auto; max-width: 320px; }
   .title-description { max-width: 280px; margin-bottom: 16px; }
+  .title-panel .menu-copy { font-size: 8px; line-height: 12px; margin: 8px auto; }
+  .title-description { display: none; }
   .menu-heading { font-size: 24px; }
   .menu-copy { font-size: 8px; line-height: 16px; margin: 12px auto 16px; }
   .help-panel .menu-heading, .relic-panel .menu-heading { font-size: 24px; }
@@ -194,9 +231,23 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .page-caption span { display: none; }
   .run-stats { margin: 16px 0; padding: 12px 0; }
   .run-stats strong { font-size: 16px; }
+  .talent-branches, .equipment-slots, .shop-stock { grid-template-columns: 1fr; gap: 12px; }
+  .talents-panel, .shop-panel, .inventory-panel { padding: 12px; }
+  .currency-line, .reward-copy { font-size: 8px; line-height: 16px; }
+  .supplies { flex-wrap: wrap; }
+  #ember-text { flex-basis: 100%; }
 }
 @media (max-width: 560px) {
   .title-description { display: none; }
+  .masthead { height: auto; flex-wrap: wrap; padding: 4px 0; }
+  .brand { width: 100%; }
+  .toolbar { width: 100%; justify-content: flex-end; }
+  .title-panel .eyebrow { margin-bottom: 8px; }
+  .title-panel .menu-heading { font-size: 32px; }
+  .title-panel .menu-copy { line-height: 12px; margin: 8px auto; }
+  .title-panel .primary-button { font-size: 8px; line-height: 16px; padding: 8px 12px; }
+  .title-panel .secondary-button { font-size: 8px; line-height: 16px; padding: 6px 12px; margin-top: 8px; }
+  .title-panel .menu-hint { font-size: 8px; line-height: 12px; margin-top: 8px; letter-spacing: 0; }
 }
 @media (max-width: 420px) {
   .brand-mark { display: none; }
@@ -227,7 +278,7 @@ kbd { display: inline-block; color: #e2ddbd; padding: 4px 6px; border: 2px solid
   .title-panel { padding: 0; }
   .title-panel .eyebrow { font-size: 8px; line-height: 12px; letter-spacing: 0; margin-bottom: 8px; }
   .title-panel .menu-heading { font-size: 32px; text-shadow: 0 2px #b17b47, 0 4px #1c2b29; }
-  .title-panel .menu-copy { font-size: 8px; line-height: 12px; margin: 10px auto; max-width: 252px; }
+  .title-panel .menu-copy { font-size: 8px; line-height: 12px; margin: 8px auto; max-width: 252px; }
   .primary-button { font-size: 8px; line-height: 16px; padding: 8px 12px; width: min(224px, calc(100% - 8px)); }
   .secondary-button { font-size: 8px; line-height: 16px; padding: 6px 12px; margin-top: 8px; }
   .title-panel .primary-button { padding: 8px 12px; }

@@ -2,7 +2,7 @@
 
 ## What this is
 
-Emberwake is an original browser roguelike platformer with authored pixel art, precise movement, readable combat, and a complete three-floor run. It uses Node 24 and dependency-free ES modules, Canvas, and WebAudio. No commercial game assets, persistent progression, multiplayer, or external runtime services.
+Emberwake is an original browser roguelike platformer with authored pixel art, precise movement, readable combat, local meta talents, and a complete three-floor run. It uses Node 24 and dependency-free ES modules, Canvas, and WebAudio. No commercial game assets, live-run saves, multiplayer, or external runtime services.
 
 Local execution rules: [docs/policies/local-rules.md](docs/policies/local-rules.md).
 

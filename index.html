@@ -17,18 +17,20 @@
           <span class="live-tag"><span aria-hidden="true"></span>ROGUELIKE / 01</span>
           <button class="tool-button" id="mute-button" type="button" aria-pressed="false" title="Mute audio (M)">Sound on</button>
           <button class="tool-button" id="help-button" type="button" aria-haspopup="dialog" title="Show controls (H)">Controls</button>
+          <button class="tool-button" id="talent-button" type="button" aria-haspopup="dialog" title="Ember talents (T)">Talents</button>
+          <button class="tool-button" id="inventory-button" type="button" aria-haspopup="dialog" hidden title="Equipment (I)">Gear</button>
           <button class="tool-button" id="pause-button" type="button" disabled title="Pause (Escape)">Pause</button>
         </div>
       </header>
 
       <section class="game-frame" aria-label="Emberwake game">
-        <canvas id="game" width="640" height="360" tabindex="0" aria-label="Game view. A and D move, Space jumps, J attacks, K rolls, F heals, E interacts, Escape pauses."></canvas>
+        <canvas id="game" width="640" height="360" tabindex="0" aria-label="Game view. A and D move, Space jumps, J attacks, K rolls, F heals, E interacts, I shows equipment, Escape pauses."></canvas>
         <div class="stage-vignette" aria-hidden="true"></div>
         <div class="hud" id="hud" hidden>
           <div class="vitals">
             <div class="hud-label"><span>THE REKINDLED</span><span id="health-text">100 / 100</span></div>
             <div class="health-track" id="health-meter" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="health-fill"></div></div>
-            <div class="supplies"><span class="flask" aria-hidden="true">◆</span><span id="flask-text">3 / 3 flasks</span><kbd>F</kbd><span class="divider">/</span><span class="gold-icon" aria-hidden="true">✧</span><span id="gold-text">0</span></div>
+            <div class="supplies"><span class="flask" aria-hidden="true">◆</span><span id="flask-text">3 / 3 flasks</span><kbd>F</kbd><span class="divider">/</span><span class="gold-icon" aria-hidden="true">✧</span><span id="gold-text" aria-label="Gold">0</span><span id="ember-text">0 embers</span></div>
           </div>
           <div class="floor-status">
             <div class="floor-topline"><span id="floor-name">01 · THE DROWNED KEEP</span><span id="run-clock">00:00</span></div>
@@ -43,11 +45,12 @@
 
       <footer class="below-stage">
         <div class="control-legend" aria-label="Keyboard controls">
-          <span><kbd>A</kbd><kbd>D</kbd> Move</span><span><kbd>SPACE</kbd> Jump × 2</span><span><kbd>J</kbd> Strike</span><span><kbd>K</kbd> Roll</span><span><kbd>F</kbd> Heal</span><span><kbd>E</kbd> Use</span>
+          <span><kbd>A</kbd><kbd>D</kbd> Move</span><span><kbd>SPACE</kbd> Jump × 2</span><span><kbd>J</kbd> Strike</span><span><kbd>K</kbd> Roll</span><span><kbd>F</kbd> Heal</span><span><kbd>E</kbd> Use</span><span><kbd>I</kbd> Gear</span>
         </div>
         <span class="footnote">A NEW LIFE. THE SAME FIRE.</span>
       </footer>
       <p class="page-caption">Three depths. One way out.<span>Original art · Procedural rooms · Permadeath</span></p>
+      <p class="profile-notice" id="profile-notice" role="status"></p>
       <p class="screen-reader-only" id="announcer" role="status" aria-live="polite" aria-atomic="true"></p>
     </main>
     <noscript><p class="no-script">Emberwake needs JavaScript. Enable it, then reload to enter the keep.</p></noscript>

@@ -155,7 +155,9 @@ function syncOverlay() {
   if (phase === 'help') content = helpPanel();
   else if (phase === 'title') {
     content = panel('A PIXEL-ART ROGUELIKE', 'EMBERWAKE', 'Beneath the drowned keep, an ember still burns.', 'title-panel');
-    content.insertBefore(element('span', 'title-sigil', '✦'), content.firstChild);
+    const sigil = element('span', 'title-sigil', '✦');
+    sigil.setAttribute('aria-hidden', 'true');
+    content.insertBefore(sigil, content.firstChild);
     content.append(element('p', 'title-description', 'Master the blade. Descend through shifting rooms. Die, rekindle, and try again.'));
     content.append(button('Enter the keep', () => startRun()));
     content.append(element('p', 'menu-hint', 'PRESS ENTER TO BEGIN'));
@@ -172,7 +174,9 @@ function syncOverlay() {
     const cards = element('div', 'relic-cards');
     game.offer.forEach((offer, index) => {
       const card = button('', () => choose(offer.id), 'relic-card');
-      card.append(element('span', 'relic-number', `0${index + 1}`), element('span', 'relic-symbol', ['✦', '◇', '⟡'][index % 3]), element('strong', '', offer.name), element('span', 'relic-description', offer.description), element('span', 'relic-select', `TAKE RELIC · ${index + 1}`));
+      const symbol = element('span', 'relic-symbol', ['✦', '◇', '⟡'][index % 3]);
+      symbol.setAttribute('aria-hidden', 'true');
+      card.append(element('span', 'relic-number', `0${index + 1}`), symbol, element('strong', '', offer.name), element('span', 'relic-description', offer.description), element('span', 'relic-select', `TAKE RELIC · ${index + 1}`));
       cards.append(card);
     });
     content.append(cards, element('p', 'menu-hint', 'CHOOSE WITH 1 / 2 / 3 OR CLICK A RELIC'));

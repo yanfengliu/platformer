@@ -1,5 +1,13 @@
 # Defect register
 
+## EW-P1 — Smooth interface and rendering weakened the pixel-art style
+
+**Reported symptom:** “Need more pixel art style”.
+
+**Investigation:** On f9039a61268acda2cbcba47c2d6a22f630376c5b the Canvas used integer polygon vertices but browser vector fill still antialiased diagonal edges, and smooth sky/haze/vignette gradients and layered translucent lighting added continuous tones. The DOM title and brand used Georgia serif, and interface styling included smooth gradients, blurred glows and rounded/tilted details. Baseline real-key title/gameplay was inspected at 1280×800,720×560,320×640; 90 actual gameplay RAF intervals measured median/p95 16.70ms with no browser errors.
+
+**Repair and verification:** Pending final integration. The UI candidate uses an original local 5×7 font with 800-unit em and 100-unit cells, CSS sizes in multiples of 8px, stepped borders and flat colors. Early headless real-control checks verified the font loads, both title actions remain visible/clickable, and sword tap/hold, roll, combat, mute, pause and reduced motion remain correct at all three sizes. Renderer acceptance and whole-class pixel/asset gates remain outstanding.
+
 ## EW-C1 — Repeated sword strikes had no readable combo feedback
 
 **Reported symptom:** “Also I don't see any combo effect when I use the sword repeatedly”.

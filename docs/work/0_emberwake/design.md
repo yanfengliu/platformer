@@ -28,6 +28,8 @@ Player sword `attack` and `hit` events include `stage` (1–3). Attack `amount` 
 
 `createRenderer(canvas)` returns `{ render(game, dt, events = [], options = {}), destroy() }`. Renderer sets canvas native dimensions to 640×360. It owns its camera and bounded transient particles. It draws the world and actors even on title/paused screens. Options include `reducedMotion` and `paused`. Render gracefully handles an empty event list and absent optional state fields. HUD and menus belong to app; in-world enemy health, attack telegraphs, pickups, exit labels, and environmental details belong to renderer.
 
+Presentation keeps hard pixel edges: authored shapes rasterize into integer axis-aligned spans, lighting uses discrete palette bands/dithering, and nearest scaling preserves the 640×360 coordinate contract. UI uses the original local `Emberwake Pixel` 5×7 font at multiples of its 8px em grid, with flat colors and stepped borders; semantic DOM controls remain accessible. The bundled font lives under `src/assets` and is copied into static builds; the local server serves it as `font/ttf`.
+
 ## App and verification
 
 App starts with an authored title overlay above a visible dungeon scene. Start/retry, pause/resume, mute, help, upgrade selection, floor change, death, and victory work by keyboard and accessible DOM buttons. Controls: A/D or arrows move; Space/W/Up jump; J/left click attack; K/Shift/right click roll; F heal; E interact; Escape pause. Include a compact persistent controls legend and a small minimap or floor progression display.

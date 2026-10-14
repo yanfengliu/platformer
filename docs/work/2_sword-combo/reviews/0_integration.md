@@ -1,10 +1,16 @@
 # Independent sword combo review — round 0
 
+## Target
+
 Author: `/root/combo_review` (fleet-pinned reviewer)
 Reviewed product revision: d95feb2f4a9c3926551d7221d4f7878fd77a3055
 Base revision: d65af01123c3e50462366ab5a059e145b8ba4037
 
-## Authored report
+## Reviewers and coverage
+
+Independent read-only `/root/combo_review` used the fleet reviewer pin and inspected all seven changed files plus adjacent core, input, renderer, audio, app, world and test paths. Coordinator owns separate gates, real browser controls and raster inspection. One independent lane; no multi-CLI quorum.
+
+## Reports
 
 Independent read-only review of `d95feb2f4a9c3926551d7221d4f7878fd77a3055` against baseline `d65af01123c3e50462366ab5a059e145b8ba4037`.
 
@@ -24,7 +30,11 @@ Adjacent unchanged code was read beyond the diff, including hit-stop input mergi
 
 The review worktree remained clean at the pinned revision. No repository files were edited, and no browser, server, persistent process, or task artifact was created.
 
-## Integration-owner acceptance
+## Findings and disposition
+
+No material findings. The authored report above and owner verification below preserve separate sources of evidence.
+
+## Verification
 
 No material findings remain. Coordinator independently ran check, all 55 tests, build and diff check on the exact product bytes. The dependency audit was not repeated because manifests and dependencies are unchanged.
 
@@ -35,3 +45,7 @@ Real movement and attacks hit a seed-0 walker with stage two (42→19 health) an
 Title and third-stage gameplay renders were inspected at 1280×800, 720×560 and 320×640. At every size, both title actions were inside the clipped frame and clicked successfully. At 320px Start spans y183.015625–217.015625 and How to play y247.015625–275.015625. Stage feedback stays inside the game view without crowding the DOM HUD. Evidence was captured from d95feb2 product bytes; the sorted PNG digest manifest (filename plus SHA-256, PowerShell UTF-8 lines) has SHA-256 `95037ABB4C956F8BE310A0FF8AC6619D2C63EBAFD0F67E81CA441898E3D2FF98`, covering six native strike crops, six viewport captures, two impacts and the baseline image. Disposable evidence is removed after closure; this record preserves provenance and bounds.
 
 All launches used the task-local hidden-child preload and headless Chromium. The named browser, daemon, hidden server and all recorded children closed in `finally`; exact PID/name/command-line inventory then confirmed zero leftovers. The worker also launched no browser/server and verified no worker-owned processes.
+
+## Round outcome
+
+No material findings or local acceptance gaps remain. Product source and controls/raster gates pass on the exact reviewed revision. Main push, remote CI and disposal of worktrees/output are tracked in the plan. The first review-document check rejected missing template headings; the complete existing fleet schema was then applied without changing the authored report or product bytes.

@@ -4,6 +4,10 @@
     {
       "id": 0,
       "theme": "emberwake"
+    },
+    {
+      "id": 1,
+      "theme": "weapon-motion"
     }
   ]
 }

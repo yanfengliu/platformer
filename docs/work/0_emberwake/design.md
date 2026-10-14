@@ -10,6 +10,8 @@ Core worker owns `src/game.js`, `src/world.js`, and `tests/game.test.js`. Visual
 
 `createGame(seed = number)` returns a plain state object. `updateGame(game, input, dt)` advances by seconds, normally 1/120. `chooseUpgrade(game, id)` applies an offered upgrade. `drainEvents(game)` returns and clears events. Named exports include these functions and `UPGRADES`. No DOM imports in core.
 
+`clearActionBuffers(game)` discards queued actions and hit-stop edges when the input layer clears on pause, blur or hiding. It expires combo continuation while preserving the current attack pose. A repeated sword tap queues at most one follow-up through current recovery; roll and damage cancel interrupted sword sequences.
+
 Input has held booleans `left`, `right`, `jumpHeld`, `downHeld` and edge booleans `jumpPressed`, `attackPressed`, `rollPressed`, `healPressed`, `interactPressed`. Edge actions must be consumed once across fixed steps. Input may contain `attackHeld` as optional convenience; attack must work on a press.
 
 State fields: `seed`, `mode` (`playing`, `choice`, `dead`, `won`), `time`, `floor` (1-based), `kills`, `gold`, `combo`, `bestCombo`, `upgrades` (chosen IDs), `offer` (objects with `id`, `name`, `description`), `player`, `world`, `enemies`, `projectiles`, and `events`. Optional fields can be added compatibly. A run has three generated floors, ending with a boss and a won screen; death can restart with a new seed.
@@ -19,6 +21,8 @@ Player and enemies use world pixel positions `x`, `y`, `w`, `h`, `vx`, `vy`, `fa
 World contains `width`, `height`, `platforms` (`x,y,w,h,oneWay`), `rooms` (`x,w,kind,index`), `exit` (`x,y,w,h,locked`), `pickups` (`x,y,type`), and optional `decor`. Solid floor is guaranteed. Rooms mix combat, traversal, and a relic choice; reaching an unlocked exit and pressing interact advances floors. Relic choices use game.mode=choice and game.offer. World generation must be reproducible and its traversable routes verified.
 
 Projectiles use `x,y,vx,vy,w,h,type,owner`. Events use `type`, `x`, `y` and optional `amount`, `direction`, `target`. Supported event types: `attack`, `hit`, `damage`, `kill`, `jump`, `land`, `roll`, `heal`, `pickup`, `upgrade`, `boss`, `complete`. A hit event is emitted once per successfully damaged enemy per attack, with impact position, damage amount, and direction. Events drive sounds, sparks, damage text, hit-stop, and camera shake; core itself can own a short hit-stop timer.
+
+Player sword `attack` and `hit` events include `stage` (1–3). Attack `amount` retains stage compatibility; hit `amount` remains damage. `player.combo` is the sword sequence, while `game.combo`/`bestCombo` remain the enemy kill chain. The actor-local stage cue and finisher effects work even when no enemy is hit.
 
 ## Renderer API
 

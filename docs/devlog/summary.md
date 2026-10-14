@@ -1,5 +1,7 @@
 # Devlog Summary
 
+- 2026-10-13: **Sword combos communicate all three strikes** — numbered steps, teal strokes and an amber finisher now work even on misses, with distinct sounds and finisher sparks. Early released taps queue one follow-up through recovery; interruption clears it. Twelve checks fail on the old modules and pass after repair, all 55 tests pass, and real-key headless controls/native renders pass independent acceptance.
+
 - 2026-10-13: **Warden windups keep their chosen health phase after damage** — review caught a half-health hit rewinding the axe pose. Chosen-duration metadata fixes both melee and volley without changing combat timing; two new actual-damage regressions pass and the complete suite passes 43.
 - 2026-10-13: **Every physical weapon moves through its attack** — three sword combo paths, enemy blade/bow/hammer/axe poses and a distinct Warden volley now follow simulation clocks. Seventeen drawing checks pass; the old renderer fails fifteen, including all weapon paths. Browser and independent acceptance remain with the integration owner.
 - 2026-10-13: **Emberwake is playable from title to boss victory** — original pixel art, precise buffered movement, sword combos and roll immunity, three generated floors and relic choices. Twenty-four simulation/input checks pass; an actual-key browser run wins with 20 kills. Independent review found and resolved delayed-tap height and compact-menu clipping.

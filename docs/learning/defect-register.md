@@ -1,5 +1,17 @@
 # Defect register
 
+## EW-C1 — Repeated sword strikes had no readable combo feedback
+
+**Reported symptom:** “Also I don't see any combo effect when I use the sword repeatedly”.
+
+**Investigation and root cause:** On d65af01123c3e50462366ab5a059e145b8ba4037, player combo stages already cycled through three poses and damage values, but slash size/palette and sound were shared, attack events had no rendered effect, and the visible CHAIN counter measured enemy kills. A second input problem dropped an early repeated tap because the 0.17-second buffer expired before the current 0.33–0.44-second recovery finished. A real-key seed-0 probe tapped J twice 70ms apart and observed exactly one swing after 600ms, zero kills and a hidden kill-chain counter. Holding J for 1300ms then produced stages 1,2,3,1 with no browser errors; this establishes the missing feedback separately from the dropped input.
+
+**Repair:** Each stage has actor-local numbered feedback, distinct slash color, and distinct synthesized attack sound. The third stage has a broader amber slash, FINISH label and additional attack/impact sparks. Explicit event `stage` metadata preserves damage `amount`; the separate kill-chain counter and damage/recovery timings remain intact. A single follow-up tap survives remaining recovery. Roll and damage reset the sequence, and the input clear callback removes queued actions and hit-stop edges without changing an active paused weapon pose.
+
+**Whole-class gate and red/green proof:** `tests/sword-combo.test.js` runs production core, renderer, input and audio modules. Twelve checks cover released taps 50ms into all three recoveries at normal/faster speed, one-slot saturation, held cycles with original timings, expiry, actual projectile damage, roll, external input cancellation and hit-stop edges, event stage/damage semantics, actual Canvas stage/pip/slash drawings, reduced effects, finisher sparks and stage audio with unlock/mute/pause guards. Replaying the gate with `EMBERWAKE_COMBO_SOURCE` pointing to an ignored directory containing `git show d65af011:src/{game,render,input,audio}.js` plus `world.js` fails all twelve; repaired modules pass all twelve and the complete suite passes 55. Initial fixture omissions and helper syntax errors were corrected before the valid proof and are not counted as product failures.
+
+**Evidence and bounds:** Automated checks are bounded to seed 1234, 120Hz, 640×360 Canvas draw commands and mocked DOM/WebAudio; they do not certify raster or actual controls. Coordinator real-key seed-0 acceptance proved the 70ms tap repair, held stages in both facings, no phantom strike after pause, distinct real audio schedules and muted silence, and actual stage-three damage in normal/reduced motion. Six native strike crops plus title/gameplay at 1280×800, 720×560 and 320×640 were inspected individually. The first combat probe killed the walker before stage three; a corrected real-control probe primed strokes at range and observed stage-two 42→19 and stage-three 19→0 damage. Exact revision, independent clean review, render digest provenance and limitations are retained in `docs/work/2_sword-combo/reviews/0_integration.md`. Raw output is deleted at closure. Implementation and orchestration elapsed time is about 45 minutes; model calls/compute were not separately measured.
+
 ## EW-W1 — Physical weapons stayed still during attacks
 
 **Reported symptom:** “The sword doesn't move when I strike. Fix this for all weapons on all characters, me and the enemies”.

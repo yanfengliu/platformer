@@ -62,3 +62,15 @@ title-native-1280.png f395748a971a0a2c53f2e4e4e5ce372d7e93907b2c587e359637377937
 title-native-320.png 5ab8c10af276c320eee52020ca763e319ca7dde204c0b6dcc2e8293a98b6f985
 title-native-720.png ce9d2bac06825fa74de783d07ef8ea55dfd9832249a3d48dd71aefcac060f50b
 ```
+
+## Final main acceptance
+
+Fast-forward main 9a8dc2f1c7e685220a556d3c4a581bfae08bc210 has the same reviewed product tree. Final main check, all 107 tests, build and source/build byte comparison pass. A second actual-control run against main's dist made four loot choices, three swaps and one purchase, reopened the merchant with the old gear on the ground and recovered it at 38.67 simulation seconds, with no page errors. The owner inspected these three final captures:
+
+```text
+shop-320.png 3c444b7490548b77dcbc7770e74a16d4bbf625de8faf5fac427f85f803f61391
+loot-320.png bc9f4b91009d14804948e51eaff37ee961784e1d29768aae702b3941eb48f005
+equipped-1280.png 2ca50931583b0613baccc25c40b53a529b06874f6196720eab35156b98e25211
+```
+
+GitHub Actions 38685062365 passed install, dependency audit, syntax/static checks, all tests and build. Final identity-based process audit found zero task-owned processes and zero port 4192 listeners. One prior orphaned hidden conhost child of task server 46956 was stopped by exact PID and parent identity before this final clean audit.

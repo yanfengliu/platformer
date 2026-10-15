@@ -1,6 +1,6 @@
 # Item icons and visible gear slot limits
 
-Status: active
+Status: complete
 Owner: Codex
 Created: 2026-10-14
 Updated: 2026-10-14
@@ -34,10 +34,12 @@ Retain the existing single-item inventory object and centralize its three slot n
 
 ## Outcome
 
-Implementation and local acceptance complete; final commit review, main delivery, CI and cleanup pending. Check covers 31 JavaScript files; all 107 tests and build pass. Existing lessons file is absent. Baseline gear already uses one object value per type, but direct assignments discarded the previous value and menu cards contained only text.
+Delivered product commit 26d4a88f0029aa38527cc822f6f6b94a5a97db2f and independent acceptance commit 9a8dc2f1c7e685220a556d3c4a581bfae08bc210 to main and origin/main. Final main check covers 31 JavaScript files; all 107 tests, build and source/build byte comparison pass. Independent final review has no open material findings. GitHub Actions 38685062365 passed install, dependency audit, check, tests and build. Existing lessons file is absent. Baseline gear already used one object value per type, but direct assignments discarded the previous value and menu cards contained only text.
 
 The old core fails four of the initial five transaction tests; old renderer fails the catalog ground-icon gate; old real-control UI fails the three-icon assertion. The F0 center-drop mutation fails merchant re-entry. Final simulation gates cover all three types, every catalog replacement, 12 recovery cycles, atomic rejection and supporting ledges/pits. There was one substantive repair, F0. A test's strict comparison to decimal 1.14 was corrected for floating-point addition before accepting the gate; two browser harness errors (an accessible-name locator and URL absent from the CLI sandbox) were corrected without product changes.
 
-Built seed-0 real controls made four loot choices, three loot swaps and one purchase, reopened the merchant while the old item survived, and recovered it with E at 36.82 simulation seconds. All 15 item icons were inspected individually at their rendered 48px size. Empty and occupied equipment, talent, shop and loot menus were inspected at 1280×800, 720×560 and 320×640, including first named cards, keyboard scrolling and purchase feedback. Both title actions fit the strict inner frame and accepted real clicks at 320,420,421,480,481,560,561,720,1280px widths. No page errors occurred. Raw evidence remains under ignored output until final review accepts it.
+Built seed-0 real controls made four loot choices, three loot swaps and one purchase, reopened the merchant while the old item survived, and recovered it with E at 36.82 simulation seconds. Final main repeated the same successful flow at 38.67 simulation seconds. All 15 item icons were inspected individually at their rendered 48px size. Empty and occupied equipment, talent, shop and loot menus were inspected at 1280×800, 720×560 and 320×640, including first named cards, keyboard scrolling and purchase feedback. Both title actions fit the strict inner frame and accepted real clicks at 320,420,421,480,481,560,561,720,1280px widths. No page errors occurred. Console resource errors were inherited favicon.ico 404s. Authored reviews retain visual byte digests; raw evidence was deleted at closure.
 
 The pure callback scripts/browser/gear-menus.mjs is the retained headless menu gate; use Playwright CLI run-code from an ignored output folder against a fresh built-game session. It checks named cards, icons, capacity and actual clicks/keyboard scrolling. Full swap controls remain separate acceptance evidence. No dependency or persistent-profile format changed; production debug remains read-only. Ground gear belongs to the current floor and is removed with that world on floor transition, as before.
+
+All acceptance criteria are met. The identity-based final audit found zero task-owned browser/daemon/server/console processes and zero port 4192 listeners. The merged worktree, branch and all disposable task output were removed; only the primary checkout remains. The primary dist build is intentionally retained as the current verified static artifact. One orphaned hidden console host from a stopped task server was removed by its exact PID/parent identity. No required check is skipped or unavailable. Expected negative controls and corrected harness errors above are distinguished from product failures.

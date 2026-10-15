@@ -35,9 +35,15 @@ async (page) => {
     assert(JSON.stringify(left.world.pickups.find(p=>p.id===pickup.id))===JSON.stringify(pickup), 'Leaving must preserve the exact original pickup');
     assert(JSON.stringify(left.inventory)===inventory,'Leaving must not equip gear');
     await page.keyboard.down('a');
-    try { await page.waitForTimeout(550); } finally { await page.keyboard.up('a'); }
+    try {
+      for (let step=0;step<50;step++) {
+        const g=(await snapshot()).game;
+        if (Math.abs(g.player.x+g.player.w/2-pickup.x)>70) break;
+        await page.waitForTimeout(50);
+      }
+    } finally { await page.keyboard.up('a'); }
     const away=(await snapshot()).game;
-    assert(Math.abs(away.player.x+away.player.w/2-pickup.x)>52,'Walk outside the gear interaction radius');
+    assert(Math.abs(away.player.x+away.player.w/2-pickup.x)>52,`Walk outside the gear interaction radius: player=${away.player.x}, gear=${pickup.x}, mode=${away.mode}`);
     for (let i=0;i<65;i++) {
       const g=(await snapshot()).game, dx=pickup.x-g.player.x-g.player.w/2;
       if (Math.abs(dx)<12) break;

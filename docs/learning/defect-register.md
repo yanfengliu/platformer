@@ -1,5 +1,21 @@
 # Defect register
 
+## EW-I1 — Item cards had no icons and gear capacity was unclear
+
+**Reported symptom:** “Items need to have icon, and there should be limited number of slots per type of gear.”
+
+**Investigation and root cause:** Base 044f8b2 already stored one blade, armor and charm, but menu cards were text-only and showed no occupied capacity. Ground art identified only the gear type, not the individual item.
+
+**Repair and whole-class gate:** A shared original 12×12 pixel atlas covers all 13 gear items, both merchant consumables and subdued empty-type icons. Menu cards use crisp SVG pixels and ground gear uses the same cached pixels through Canvas. Equipment shows 0/1 or 1/1 for each type. tests/item-icons.test.js checks complete catalog coverage, valid grid/color data and distinct art; tests/item-icon-render.test.js checks every catalog ground icon's actual Canvas pixels. scripts/browser/gear-menus.mjs checks actual title clicks, all three visible gear/type icons and slot counts, first named cards and keyboard scrolling at required sizes. The old renderer fails on Iron edge pixel 8,0; the old real-control equipment UI fails the three-icon assertion. Repaired checks pass. Individual icon captures and menus were inspected; the gates' stated bounds do not certify every possible combat scene.
+
+## EW-G1 — Replacing gear destroyed the previous item
+
+**Reported symptom:** “And items should not just disappear if a newer one replaces it. It should drop on the ground.”
+
+**Investigation and root cause:** resolveLoot and buyShopItem independently overwrote inventory[slot] without preserving its previous value. A first implementation dropped at the player's center; review found that the gear could cover the merchant interaction position.
+
+**Repair and whole-class gate:** Both paths use one equip function, copying the displaced gear into a uniquely identified ground pickup beside the player on a supporting surface. Loot remains explicit E interaction. The nearest eligible target wins, so merchants remain accessible without consuming nearby gear. tests/gear-slots.test.js covers all catalog replacements, all three merchant types, repeated real simulation interactions, conservation, unchanged other slots, no stat stacking/healing, invalid/declined transactions and ledge/pit placement. The original core fails four of the initial five transaction tests; a center-drop mutation fails merchant re-entry while the drop survives. The repaired suite passes. A built seed-0 real-control run made four loot choices, three loot swaps, one merchant purchase, reopened the merchant with gear still on the ground and recovered that gear. This is run-only equipment; a new floor replaces the old world and a new life resets run gear.
+
 ## EW-P1 — Smooth interface and rendering weakened the pixel-art style
 
 **Reported symptom:** “Need more pixel art style”.

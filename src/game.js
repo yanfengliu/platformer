@@ -1,5 +1,5 @@
 import { createWorld, seededRandom, GROUND_Y } from './world.js';
-import { TALENTS, ITEMS, talentBonuses, rollGear } from './roguelike.js';
+import { TALENTS, ITEMS, GEAR_SLOTS, talentBonuses, rollGear } from './roguelike.js';
 
 const STEP = 1 / 120;
 const GRAVITY = 1100;
@@ -80,7 +80,8 @@ export function createGame(seed = Date.now(), { talents = {} } = {}) {
     seed: normalized, mode: 'playing', time: 0, floor: 1,
     kills: 0, floorKills: 0, totalFloorEnemies: world.enemySpawns.length,
     gold: bonuses.startingGold, embers: 0, combo: 0, bestCombo: 0, streakTime: 0,
-    talents: ranks, inventory: { blade: null, armor: null, charm: null }, pendingLoot: null, shop: null,
+    talents: ranks, inventory: Object.fromEntries(GEAR_SLOTS.map((slot) => [slot, null])), pendingLoot: null, shop: null,
+    gearDropSequence: 0,
     upgrades: [], offer: [], player: createPlayer(world), world,
     enemies: createEnemies(world, 1), projectiles: [], events: [],
     hitStop: 0, stats: {},
@@ -528,14 +529,18 @@ function nextFloor(game) {
 
 function updatePickupsAndExit(game, input) {
   const player = game.player;
+  const interaction = input.interactPressed ? [
+    ...game.world.pickups.filter((p) => !p.collected && ['gear', 'relic'].includes(p.type) && Math.abs(p.x - centerX(player)) < 52 && Math.abs(p.y - centerY(player)) < 45),
+    ...(game.world.merchants ?? []).filter((m) => Math.abs(m.x - centerX(player)) < 52 && Math.abs(m.y - player.y - player.h) < 45),
+  ].sort((a, b) => Math.abs(a.x - centerX(player)) - Math.abs(b.x - centerX(player)))[0] : null;
   for (const pickup of game.world.pickups) {
     if (pickup.collected) continue;
     const near = Math.abs(pickup.x - centerX(player)) < (['relic', 'gear'].includes(pickup.type) ? 52 : 22) && Math.abs(pickup.y - centerY(player)) < 45;
     if (!near) continue;
     if (pickup.type === 'relic') {
-      if (input.interactPressed) { offerRelic(game, pickup); return; }
+      if (pickup === interaction) { offerRelic(game, pickup); return; }
     } else if (pickup.type === 'gear') {
-      if (input.interactPressed) {
+      if (pickup === interaction) {
         game.pendingLoot = pickup;
         game.mode = 'loot';
         clearActionBuffers(game);
@@ -552,7 +557,7 @@ function updatePickupsAndExit(game, input) {
     }
   }
   if (input.interactPressed) {
-    const merchant = (game.world.merchants ?? []).find((entry) => Math.abs(entry.x - centerX(player)) < 52 && Math.abs(entry.y - player.y - player.h) < 45);
+    const merchant = (game.world.merchants ?? []).find((entry) => entry === interaction);
     if (merchant) {
       game.shop = merchant;
       game.mode = 'shop';
@@ -584,12 +589,33 @@ function validGear(item) {
   return Boolean(definition && Object.keys(item).length === Object.keys(definition).length && Object.entries(definition).every(([key, value]) => item[key] === value));
 }
 
+function equipGear(game, item) {
+  const previous = game.inventory[item.slot];
+  if (previous) {
+    const player = game.player;
+    // Put the old item on the first surface below the player, including ledges.
+    // If swapping over a pit, use the nearest platform edge so it stays reachable.
+    const below = game.world.platforms.filter((p) => p.y >= player.y + player.h - .01 && p.x < player.x + player.w && p.x + p.w > player.x).sort((a, b) => a.y - b.y)[0];
+    const distance = (p) => Math.hypot(centerX(player) - clamp(centerX(player), p.x + 6, p.x + p.w - 6), p.y - player.y - player.h);
+    const surface = below ?? [...game.world.platforms].sort((a, b) => distance(a) - distance(b))[0];
+    const beside = (direction) => surface ? clamp(centerX(player) + direction * 26, surface.x + 6, surface.x + surface.w - 6) : centerX(player) + direction * 26;
+    const preferred = beside(player.facing);
+    const x = Math.abs(preferred - centerX(player)) >= 12 ? preferred : beside(-player.facing);
+    game.world.pickups.push({
+      id: `swap-${game.floor}-${++game.gearDropSequence}`, type: 'gear', item: { ...previous },
+      x,
+      y: (surface?.y ?? player.y + player.h) - 18, collected: false,
+    });
+  }
+  game.inventory[item.slot] = { ...item };
+  recomputeStats(game);
+}
+
 export function resolveLoot(game, take) {
   const pickup = game.pendingLoot;
   if (game.mode !== 'loot' || typeof take !== 'boolean' || !pickup || pickup.collected || pickup.type !== 'gear' || !game.world.pickups.includes(pickup) || (take && !validGear(pickup.item))) return false;
   if (take) {
-    game.inventory[pickup.item.slot] = { ...pickup.item };
-    recomputeStats(game);
+    equipGear(game, pickup.item);
     emit(game, 'upgrade', pickup.x, pickup.y, { target: pickup.item.id });
   }
   pickup.collected = true;
@@ -609,7 +635,7 @@ export function buyShopItem(game, id) {
   if (!['gear', 'heal', 'flask'].includes(stock.kind)) return false;
   game.gold -= stock.price;
   stock.sold = true;
-  if (stock.kind === 'gear') { game.inventory[stock.item.slot] = { ...stock.item }; recomputeStats(game); }
+  if (stock.kind === 'gear') equipGear(game, stock.item);
   if (stock.kind === 'heal') game.player.hp = Math.min(game.player.maxHp, game.player.hp + 40);
   if (stock.kind === 'flask') game.player.flasks += 1;
   emit(game, 'upgrade', game.shop.x, game.shop.y - 20, { target: stock.id });

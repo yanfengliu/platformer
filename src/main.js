@@ -2,7 +2,8 @@ import { createGame, updateGame, chooseUpgrade, drainEvents, clearActionBuffers,
 import { createRenderer } from './render.js';
 import { createInput } from './input.js';
 import { createAudio } from './audio.js';
-import { TALENTS } from './roguelike.js';
+import { TALENTS, GEAR_SLOTS } from './roguelike.js';
+import { itemIconSvg } from './item-icons.js';
 import { createProfileStore, talentAvailability, PROFILE_KEY } from './profile.js';
 
 const STEP = 1 / 120;
@@ -183,16 +184,31 @@ function addRewards(content) {
 
 function equipmentCard(item, slot, className = 'equipment-card') {
   const card = element('div', className);
-  card.append(element('p', 'item-label', `${slot.toUpperCase()}${item ? ` · ${item.rarity.toUpperCase()}` : ''}`));
-  card.append(element('h2', 'item-name', item?.name ?? `No ${slot} equipped`));
+  card.dataset.slot = slot;
+  if (item) card.dataset.rarity = item.rarity;
+  const heading = element('div', 'item-heading');
+  heading.append(itemIcon(item?.id, slot));
+  const name = element('div', 'item-heading-copy');
+  name.append(element('p', 'item-label', `${slot.toUpperCase()}${item ? ` · ${item.rarity.toUpperCase()}` : ''}`));
+  name.append(element('h2', 'item-name', item?.name ?? `Empty ${slot} slot`));
+  heading.append(name);
+  card.append(heading);
+  if (className === 'equipment-card' && inventoryOpen) card.append(element('p', 'slot-count', `${item ? 1 : 0} / 1 SLOT USED`));
   card.append(element('p', 'item-description', item?.description ?? 'Find gear or buy it from a merchant.'));
   return card;
+}
+
+function itemIcon(id, slot) {
+  const icon = element('span', `item-icon${id ? '' : ' item-icon-empty'}`);
+  icon.setAttribute('aria-hidden', 'true');
+  icon.innerHTML = itemIconSvg(id, slot);
+  return icon;
 }
 
 function equipmentComparison(item) {
   const current = game.inventory[item.slot];
   const comparison = element('div', 'equipment-comparison');
-  comparison.append(element('p', 'item-label', `REPLACES ${current?.name ?? 'EMPTY SLOT'}`));
+  comparison.append(element('p', 'item-label', current ? `DROPS ${current.name.toUpperCase()} ON THE GROUND` : `FILLS EMPTY ${item.slot.toUpperCase()} SLOT`));
   const stats = element('dl', 'comparison-stats');
   for (const [key, label, percent] of [['damage', 'Damage', true], ['attackSpeed', 'Attack speed', true], ['maxHp', 'Health', false], ['armor', 'Guard', true], ['leech', 'Heal on kill', false], ['rollRecovery', 'Roll recovery', true]]) {
     const before = current?.[key] ?? 0;
@@ -268,10 +284,10 @@ function talentsPanel() {
 }
 
 function inventoryPanel() {
-  const content = panel('THIS LIFE ONLY', 'Your equipment', 'Gear replaces the item in its slot. Relics and talents add to its effects.', 'inventory-panel');
+  const content = panel('THIS LIFE ONLY', 'Your equipment', 'One blade, one armor, one charm. Swapping gear drops the old item on the ground.', 'inventory-panel');
   content.append(panelToolbar(`${game.gold} GOLD · ${game.embers} RUN EMBERS`, toggleInventory, 'Back to the run'));
   const slots = element('div', 'equipment-slots');
-  for (const slot of ['blade', 'armor', 'charm']) slots.append(equipmentCard(game.inventory[slot], slot));
+  for (const slot of GEAR_SLOTS) slots.append(equipmentCard(game.inventory[slot], slot));
   content.append(slots);
   const relics = element('p', 'item-description', `RELICS · ${game.upgrades.length ? game.upgrades.map((id) => id.replaceAll('-', ' ')).join(', ') : 'None yet'}`);
   content.append(relics, element('p', 'menu-hint', 'I OR ESCAPE TO CLOSE · THE KEEP IS PAUSED'));
@@ -279,19 +295,25 @@ function inventoryPanel() {
 }
 
 function shopPanel() {
-  const content = panel('THE ASH PEDDLER', game.shop.name ?? 'Merchant', 'Finite stock for this floor. Gear equips immediately; compare its slot before buying.', 'shop-panel');
+  const content = panel('THE ASH PEDDLER', game.shop.name ?? 'Merchant', 'Gear equips in its one slot and drops the old item on the ground. Finite stock for this floor.', 'shop-panel');
   content.append(element('p', 'compact-scroll-hint', 'Scroll stock to compare and buy'));
   content.append(panelToolbar(`${game.gold} GOLD · ${game.embers} RUN EMBERS`, () => { closeShop(game); syncOverlay(); }, 'Leave the merchant', 'Leave'));
   const stock = element('div', 'shop-stock');
   for (const entry of game.shop.stock) {
     const card = entry.item ? equipmentCard(entry.item, entry.item.slot, 'stock-card') : element('div', 'stock-card');
-    if (!entry.item) card.append(element('p', 'item-label', entry.kind.toUpperCase()), element('h2', 'item-name', entry.name), element('p', 'item-description', entry.description));
+    if (!entry.item) {
+      const heading = element('div', 'item-heading');
+      const name = element('div', 'item-heading-copy');
+      name.append(element('p', 'item-label', entry.kind.toUpperCase()), element('h2', 'item-name', entry.name));
+      heading.append(itemIcon(entry.kind), name);
+      card.append(heading, element('p', 'item-description', entry.description));
+    }
     if (entry.item) card.append(equipmentComparison(entry.item));
     const full = entry.kind === 'heal' && game.player.hp >= game.player.maxHp || entry.kind === 'flask' && game.player.flasks >= game.player.maxFlasks;
     const label = entry.sold ? 'Bought' : full ? entry.kind === 'heal' ? 'Health is full' : 'Flasks are full' : game.gold < entry.price ? `Need ${entry.price - game.gold} more gold` : `Buy · ${entry.price} gold`;
     const buy = button(label, () => {
       const bought = buyShopItem(game, entry.id);
-      if (bought) { syncOverlay(); updateHud(); announce(`${entry.name} bought. ${game.gold} gold remains.`); }
+      if (bought) { syncOverlay(); updateHud(); announce(`${entry.name} bought. ${game.gold} gold remains.${entry.item ? ' Replaced gear drops on the ground.' : ''}`); }
     }, 'stock-buy');
     buy.disabled = entry.sold || full || game.gold < entry.price;
     buy.dataset.stock = entry.id;
@@ -305,14 +327,14 @@ function shopPanel() {
 
 function lootPanel() {
   const item = game.pendingLoot.item;
-  const content = panel('FOUND IN THE ASHES', 'Take this gear?', 'Taking gear replaces the current item in its slot. Leaving it consumes the drop.', 'loot-panel');
+  const content = panel('FOUND IN THE ASHES', 'Take this gear?', 'One item per gear type. Equipping drops the old item on the ground. Leaving consumes this drop.', 'loot-panel');
   content.dataset.focusHeading = 'true';
   content.append(element('p', 'compact-scroll-hint', 'Scroll to compare, equip, or leave'));
   content.append(equipmentCard(item, item.slot), equipmentComparison(item));
   const actions = element('div', 'loot-actions');
   const leave = button('Leave it', () => { resolveLoot(game, false); syncOverlay(); announce('Gear left behind.'); }, 'secondary-button');
   leave.setAttribute('aria-describedby', 'loot-leave-note');
-  actions.append(button(`Equip ${item.name}`, () => { if (resolveLoot(game, true)) { syncOverlay(); announce(`${item.name} equipped.`); } }), leave);
+  actions.append(button(`Equip ${item.name}`, () => { if (resolveLoot(game, true)) { syncOverlay(); announce(`${item.name} equipped. Replaced gear drops on the ground.`); } }), leave);
   const leaveNote = element('p', 'item-description', 'Leaving consumes this drop.');
   leaveNote.id = 'loot-leave-note';
   content.append(actions, leaveNote, element('p', 'menu-hint', 'ESCAPE TO LEAVE · THE KEEP IS PAUSED'));

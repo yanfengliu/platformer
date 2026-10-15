@@ -1,6 +1,9 @@
 // Run equipment and permanent talent content. All effects are recomputed from sources.
 const freezeRows = (rows) => Object.freeze(rows.map((row) => Object.freeze({ ...row, ...(row.requires ? { requires: Object.freeze([...row.requires]) } : {}) })));
 
+// Each type has one equipment slot. New gear swaps with its current occupant.
+export const GEAR_SLOTS = Object.freeze(['blade', 'armor', 'charm']);
+
 export const TALENTS = freezeRows([
   { id: 'vigor', name: 'Kiln heart', branch: 'Survival', tier: 1, cost: 2, maxRank: 3, requires: [], description: '+10 maximum health per rank.' },
   { id: 'recovery', name: 'Warm draught', branch: 'Survival', tier: 2, cost: 3, maxRank: 2, requires: ['vigor'], description: 'Flasks restore 8 more health per rank.' },
@@ -51,7 +54,7 @@ export function rollGear(random, floor = 1, fortune = 0, slot = null) {
 
 export function merchantStock(random, floor) {
   return [
-    ...['blade', 'armor', 'charm'].map((slot) => {
+    ...GEAR_SLOTS.map((slot) => {
       const item = rollGear(random, floor, 0, slot);
       return { id: `gear-${slot}`, kind: 'gear', name: item.name, description: item.description, item, price: { common: 35, rare: 65, epic: 100 }[item.rarity], sold: false };
     }),

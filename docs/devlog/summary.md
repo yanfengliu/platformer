@@ -1,5 +1,7 @@
 # Devlog Summary
 
+- 2026-10-14: **Gear has icons, visible limits and recoverable swaps** — 13 gear icons and two consumable icons share menu and ground art. Each type shows one slot; replaced loot and shop gear drops nearby. Review caught merchant access blocked by ground gear; nearest-target interaction and a red/green gate resolve it. Acceptance is recorded in work 5.
+
 - 2026-10-14: **A harder roguelike with builds and lasting talents** — seven tactical enemy roles, elite encounters, 13 gear items, rarity drops, finite merchants and nine prerequisite talents. The old held-attack policy now spends healing; four tactical seeds and two actual-control runs win. All 98 checks pass, local progression survives retry/reload, and compact menus show their cards. Independent review and delivery evidence live in work 4.
 
 - 2026-10-13: **Emberwake gains a stronger pixel-art presentation** — original bitmap typography, stepped UI, integer raster shapes, dithered lighting, and richer stone/moss. All59tests and real controls/native actor/theme/menu checks pass with a60fps sample. Review caught and resolved title clipping across compact boundaries; strict inner-box checks now cover both sides.

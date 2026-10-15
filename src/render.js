@@ -1,4 +1,5 @@
 import { fillPixelPolygon } from './pixel-raster.js';
+import { ITEM_ICONS, itemIconPixels } from './item-icons.js';
 
 const WIDTH = 640;
 const HEIGHT = 360;
@@ -919,7 +920,9 @@ function drawPickup(ctx, pickup, camera, time, theme) {
       rect(ctx, color, x + side * 13 - (side > 0 ? 1 : 0), y + 6, 1, 5);
       rect(ctx, color, x + side * 13 - (side > 0 ? 4 : 0), y + 10, 4, 1);
     }
-    if (pickup.item?.slot === 'armor') {
+    if (ITEM_ICONS[pickup.item?.id]) {
+      for (const pixel of itemIconPixels(pickup.item.id)) rect(ctx, pixel.color, x - 12 + pixel.x * 2, y - 12 + pixel.y * 2, 2, 2);
+    } else if (pickup.item?.slot === 'armor') {
       polygon(ctx, '#152c34', [[x - 4, y - 10], [x + 4, y - 10], [x + 9, y - 5], [x + 5, y - 2], [x + 4, y + 8], [x - 5, y + 8], [x - 6, y - 2], [x - 10, y - 5]]);
       polygon(ctx, color, [[x - 3, y - 8], [x + 3, y - 8], [x + 6, y - 5], [x + 3, y - 4], [x + 2, y + 6], [x - 3, y + 6], [x - 4, y - 4], [x - 7, y - 5]]);
       rect(ctx, '#47606b', x - 2, y - 5, 3, 8);

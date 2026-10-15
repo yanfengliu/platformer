@@ -1,5 +1,13 @@
 # Defect register
 
+## EW-G2 — Leave it deleted ground gear
+
+**Reported symptom:** “Items should also stay on the ground when I choose Leave it, so I can come back and pick them up later.”
+
+**Investigation and root cause:** At 4997bb5, resolveLoot unconditionally set collected=true for both equip and decline. The button and Escape shared this path. Menu text explicitly described the unwanted deletion.
+
+**Repair and whole-class gate:** Only equipping marks the pickup collected. Declining closes the panel and clears buffered actions while preserving its exact identity, descriptor and location. Copy explains that it remains for the current floor. tests/gear-slots.test.js checks three repeated closes and later recovery after walking away for every catalog item, with an occupied slot and no inventory/stat mutation or duplicate pickup. The original core fails on the first declined item's collected flag; the repaired gate passes. scripts/browser/leave-loot.mjs exercises actual mouse Leave, Escape, keyboard Leave, walking beyond interaction range, returning with E and eventual equip at three required viewports. Floor changes and new lives retain their existing world lifecycle.
+
 ## EW-I1 — Item cards had no icons and gear capacity was unclear
 
 **Reported symptom:** “Items need to have icon, and there should be limited number of slots per type of gear.”

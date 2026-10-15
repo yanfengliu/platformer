@@ -618,7 +618,7 @@ export function resolveLoot(game, take) {
     equipGear(game, pickup.item);
     emit(game, 'upgrade', pickup.x, pickup.y, { target: pickup.item.id });
   }
-  pickup.collected = true;
+  pickup.collected = take;
   game.pendingLoot = null;
   game.mode = 'playing';
   clearActionBuffers(game);

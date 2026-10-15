@@ -4,7 +4,13 @@
 
 Repository platformer, base 044f8b2ed4fb91cec1829218ae6fa95e52f6b853 plus the initial uncommitted gear icon and swap implementation. Reviewer gear_review independently read the actual source and reproduced the finding through public simulation functions. Reviewed game.js SHA256 b0edb7f45ecfadb58e0103066214d0619bb4c9769fb8500eb615c99751a6a184 identifies the superseded initial implementation; final review will bind the repaired implementation to its commit.
 
-## Authored report — gear_review
+## Reviewers and coverage
+
+gear_review independently inspected the initial source and ran focused simulation checks. Browser acceptance remained with the owner. Correction on 2026-10-14: the initial uncommitted patch was not retained, so its exact bytes cannot now be recovered from the recorded digest alone. This limits this historical round's provenance; the final repaired code is recoverable at the commit named in round 1.
+
+## Reports
+
+### gear_review
 
 Review round 1 — material finding F0 [P2]
 
@@ -21,3 +27,15 @@ Verification: reviewed base plus the current dirty source/test changes; ran both
 ## Owner disposition
 
 F0 accepted and repaired. Displaced gear now appears 26 world pixels beside the player on a supporting surface, using the other side if a platform edge would put it back at the player's center. E chooses the nearest eligible gear, relic or merchant using the existing reach bounds. The revised merchant gate proves re-entry while the drop survives and recovery after moving toward it. A center-drop mutation fails that exact merchant re-entry assertion, reporting loot instead of shop. The real-control seed-0 probe passed shop purchase, shop re-entry and ground recovery. Focused re-review is required before acceptance.
+
+## Findings and disposition
+
+F0 accepted: centered ground gear could mask a merchant. Side placement and nearest-target interaction repaired it; round 1 reviewed the repair.
+
+## Verification
+
+The reviewer ran 7 focused checks and independently reproduced F0. The owner later proved a center-drop mutation fails merchant re-entry. This round did not independently verify browser controls.
+
+## Round outcome
+
+F0 required repair and focused re-review. Round 1 closed it on recoverable commit 26d4a88. Formatting correction on 2026-10-14 adds the required structural headings and records the missing initial patch without changing the authored report.

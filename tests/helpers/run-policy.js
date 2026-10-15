@@ -15,7 +15,7 @@ export function tacticalInput(game) {
   const enemies = game.enemies.filter((enemy) => !enemy.dead);
   const enemy = enemies.sort((a, b) => Math.abs(center(a) - center(player)) - Math.abs(center(b) - center(player)))[0];
   const relic = game.world.pickups.find((pickup) => pickup.type === 'relic' && !pickup.collected);
-  const gear = game.world.pickups.filter((pickup) => pickup.type === 'gear' && !pickup.collected).sort((a, b) => Math.abs(a.x - center(player)) - Math.abs(b.x - center(player)))[0];
+  const gear = game.world.pickups.filter((pickup) => pickup.type === 'gear' && !pickup.collected && gearScore(pickup.item) > gearScore(game.inventory[pickup.item.slot])).sort((a, b) => Math.abs(a.x - center(player)) - Math.abs(b.x - center(player)))[0];
   const merchant = (game.world.merchants ?? []).find((entry) => !entry.stock.every((item) => item.sold) && entry.stock.some((item) => !item.sold && item.price <= game.gold && ((item.kind === 'heal' && player.hp < player.maxHp - 20) || (item.kind === 'flask' && player.flasks < player.maxFlasks) || (item.kind === 'gear' && gearScore(item.item) > gearScore(game.inventory[item.item.slot])))));
   const safe = !enemy || Math.abs(center(enemy) - center(player)) > 180;
   const target = safe && gear && Math.abs(gear.x - center(player)) < 160 ? gear : safe && merchant && (!enemy || merchant.x < center(enemy)) ? merchant : relic && (!enemy || relic.x < enemy.x) ? relic : enemy ?? game.world.exit;

@@ -4,7 +4,13 @@
 
 Clean product commit 26d4a88f0029aa38527cc822f6f6b94a5a97db2f against base 044f8b2ed4fb91cec1829218ae6fa95e52f6b853. Independent read-only reviewer gear_review. This round covers all final product changes, including the F0 interaction repair.
 
-## Authored report — gear_review
+## Reviewers and coverage
+
+gear_review independently read clean commit 26d4a88, ran 9 focused tests and inspected seven supplied captures. The owner separately ran real controls, full gates, the viewport matrix, mutation controls and remote CI, as detailed below.
+
+## Reports
+
+### gear_review
 
 No material findings remain.
 
@@ -74,3 +80,15 @@ equipped-1280.png 2ca50931583b0613baccc25c40b53a529b06874f6196720eab35156b98e252
 ```
 
 GitHub Actions 38685062365 passed install, dependency audit, syntax/static checks, all tests and build. Final identity-based process audit found zero task-owned processes and zero port 4192 listeners. One prior orphaned hidden conhost child of task server 46956 was stopped by exact PID and parent identity before this final clean audit.
+
+## Findings and disposition
+
+F0 is resolved by the reviewed side placement and nearest-target interaction. No material findings remain.
+
+## Verification
+
+The independent reviewer passed 9 focused checks and inspected the seven digested captures. Owner acceptance passed 107 tests, static checks, build, actual controls, required viewports and CI. Exact bounds and capture digests remain above.
+
+## Round outcome
+
+Accepted for main integration with no open material findings. Formatting correction on 2026-10-14 adds required structural headings while retaining the authored report and original acceptance evidence.

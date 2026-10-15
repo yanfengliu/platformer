@@ -24,6 +24,10 @@
     {
       "id": 5,
       "theme": "gear-icons"
+    },
+    {
+      "id": 6,
+      "theme": "leave-loot"
     }
   ]
 }

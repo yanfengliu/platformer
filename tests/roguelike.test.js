@@ -126,6 +126,7 @@ test('loot validates identity, consumes one interaction and freezes physics unti
   assert.equal(pickup.collected, false);
   pickup.item = item;
   assert.equal(resolveLoot(game, false), true);
+  assert.equal(pickup.collected, false);
   assert.equal(game.inventory[item.slot], null);
   assert.equal(resolveLoot(game, true), false);
   assert.equal(game.mode, 'playing');

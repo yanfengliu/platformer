@@ -327,15 +327,15 @@ function shopPanel() {
 
 function lootPanel() {
   const item = game.pendingLoot.item;
-  const content = panel('FOUND IN THE ASHES', 'Take this gear?', 'One item per gear type. Equipping drops the old item on the ground. Leaving consumes this drop.', 'loot-panel');
+  const content = panel('FOUND IN THE ASHES', 'Take this gear?', 'One item per gear type. Equipping drops the old item on the ground. Leave gear here to collect later.', 'loot-panel');
   content.dataset.focusHeading = 'true';
   content.append(element('p', 'compact-scroll-hint', 'Scroll to compare, equip, or leave'));
   content.append(equipmentCard(item, item.slot), equipmentComparison(item));
   const actions = element('div', 'loot-actions');
-  const leave = button('Leave it', () => { resolveLoot(game, false); syncOverlay(); announce('Gear left behind.'); }, 'secondary-button');
+  const leave = button('Leave it', () => { resolveLoot(game, false); syncOverlay(); announce('Gear left on the ground. Return with E to pick it up.'); }, 'secondary-button');
   leave.setAttribute('aria-describedby', 'loot-leave-note');
   actions.append(button(`Equip ${item.name}`, () => { if (resolveLoot(game, true)) { syncOverlay(); announce(`${item.name} equipped. Replaced gear drops on the ground.`); } }), leave);
-  const leaveNote = element('p', 'item-description', 'Leaving consumes this drop.');
+  const leaveNote = element('p', 'item-description', 'Stays on the ground for this floor. Return with E.');
   leaveNote.id = 'loot-leave-note';
   content.append(actions, leaveNote, element('p', 'menu-hint', 'ESCAPE TO LEAVE · THE KEEP IS PAUSED'));
   return content;
